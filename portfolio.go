@@ -9,6 +9,10 @@ import (
 	"go.uber.org/zap"
 )
 
+type Portfolio struct {
+	PortfolioPositios []PortfolioPosition
+}
+
 type PortfolioPosition struct {
 	accoutId                 string
 	Figi                     string
@@ -75,9 +79,9 @@ func transPositions(positions []*pb.PortfolioPosition, account *Account, assetUi
 			ExpectedYieldFifo:        castMoney(v.GetExpectedYieldFifo()),
 			DailyYield:               MoneyValue(v.GetDailyYield()),
 		}
-		account.Portfolio = append(account.Portfolio, transPosionRet)
+		account.Portfolio.PortfolioPositios = append(account.Portfolio.PortfolioPositios, transPosionRet)
 	}
-	fmt.Printf("✓ Добавлено %v позиций в Account.Portfolio по счету %s\n", len(account.Portfolio), account.Id)
+	fmt.Printf("✓ Добавлено %v позиций в Account.Portfolio по счету %s\n", len(account.Portfolio.PortfolioPositios), account.Id)
 }
 
 func GetAllAssetUids(client *investgo.Client) (map[string]string, error) {

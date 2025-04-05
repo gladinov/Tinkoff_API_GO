@@ -15,7 +15,7 @@ type Account struct {
 	OpenedDate *timestamppb.Timestamp
 	ClosedDate *timestamppb.Timestamp
 	// AccessLevel pb.AccessLevel
-	Portfolio  []PortfolioPosition
+	Portfolio  Portfolio
 	Operations []Operation
 }
 

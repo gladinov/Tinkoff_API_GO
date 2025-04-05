@@ -39,7 +39,7 @@ func AddPositions(nameDB string, account Account) {
 	}
 	count := 0
 	// Добавляем позиции в таблицу БД с динамическим названием портфель_аккаунт
-	for _, vals := range account.Portfolio {
+	for _, vals := range account.Portfolio.PortfolioPositios {
 
 		_, err := db.Exec(InsertPortfolioSQL(account.Id),
 			vals.accoutId,
