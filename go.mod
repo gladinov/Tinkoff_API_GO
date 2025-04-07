@@ -15,7 +15,6 @@ require (
 	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.0.0-rc.5 // indirect
 	github.com/mattn/go-sqlite3 v1.14.24
 	github.com/shopspring/decimal v1.3.1 // indirect
-	github.com/tinkoff/invest-api-go-sdk v1.4.6
 	go.uber.org/multierr v1.11.0 // indirect
 	golang.org/x/net v0.14.0 // indirect
 	golang.org/x/oauth2 v0.11.0 // indirect
