@@ -63,31 +63,27 @@ func main() {
 
 	opereationsService := client.NewOperationsServiceClient()
 	//Создаем подключение к инструментам API
-	instrumentService := client.NewInstrumentsServiceClient()
+
 	// Создаем БД
 	nameDB := "T_API.db"
 	BuildDB(nameDB)
 	// //////
 
 	for _, account := range accsList {
-
 		// Получаем данные по портфелям по кажому счету
 		GetPortf(logger, client, &account)
 		// Добавляем в базу данных
-		AddPositions(nameDB, account)
+		// AddPositions(nameDB, account)
 		// получаем данные по операциям
 		GetOpp(logger, opereationsService, &account)
 		// добавляем операции в DB
-		AddOperations(nameDB, account)
+		// AddOperations(nameDB, account)
+		for _, v := range account.Portfolio.BondPosions {
+			fmt.Println(v)
+			fmt.Println()
+		}
 	}
 
 	// пробная версия получения тикера по uid
-	uids, _ := GetUidsFromSQL(nameDB)
-	uidTickerMap, _ := MatchTickerAndUid(instrumentService, uids)
-	// Добавляем таблиту Тикер-UID в базу данных
-	AddTickerUid(nameDB, uidTickerMap)
-
-	bondRubMap, _ := GetBondsActionsFromPortfolio(uidTickerMap)
-	fmt.Print(len(bondRubMap))
 
 }

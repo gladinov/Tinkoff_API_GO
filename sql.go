@@ -42,7 +42,6 @@ func AddPositions(nameDB string, account Account) {
 	for _, vals := range account.Portfolio.PortfolioPositios {
 
 		_, err := db.Exec(InsertPortfolioSQL(account.Id),
-			vals.accoutId,
 			vals.Figi,
 			vals.InstrumentType,
 			vals.Currency,
@@ -50,10 +49,8 @@ func AddPositions(nameDB string, account Account) {
 			vals.AveragePositionPrice,
 			vals.ExpectedYield,
 			vals.CurrentNkd,
-			vals.AveragePositionPricePt,
 			vals.CurrentPrice,
 			vals.AveragePositionPriceFifo,
-			vals.QuantityLots,
 			vals.Blocked,
 			vals.BlockedLots,
 			vals.PositionUid,

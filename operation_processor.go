@@ -4,6 +4,22 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
+const (
+	WithholdingOfPersonalIncomeTaxOnCoupons        = 2   // 2	Удержание НДФЛ по купонам.
+	WithholdingOfPersonalIncomeTaxOnDividends      = 8   // 8    Удержание налога по дивидендам.
+	PartialRedemptionOfBonds                       = 10  // 10	Частичное погашение облигаций.
+	PurchaseOfSecurities                           = 15  // 15	Покупка ЦБ.
+	PurchaseOfSecuritiesWithACard                  = 16  // 16	Покупка ЦБ с карты.
+	TransferOfSecuritiesFromAnotherDepository      = 17  // 17	Перевод ценных бумаг из другого депозитария.
+	WithhouldingACommissionForTheTransaction       = 19  // 19	Удержание комиссии за операцию.
+	PaymentOfDividends                             = 21  // 21	Выплата дивидендов.
+	SaleOfSecurities                               = 22  // 22	Продажа ЦБ.
+	PaymentOfCoupons                               = 23  // 23 Выплата купонов.
+	StampDuty                                      = 47  // 47	Гербовый сбор.
+	TransferOfSecuritiesFromIISToABrokerageAccount = 57  // 57   Перевод ценных бумаг с ИИС на Брокерский счет
+	EuroTransBuyCost                               = 240 //Стоимость Евротранса при переводе из другого депозитария
+)
+
 type ReportPositions struct {
 	CurrentPositions []SharePosition
 	ClosePostion     []SharePosition
@@ -36,19 +52,20 @@ type SharePosition struct {
 }
 
 // в данную фунцию можн о дабавить еще текущую цену бумаги и запрашивать ее один раз при полученни UID
-func ProcessPositions(processPosition *ReportPositions, operation Operation) {
+func ProcessPositions(operation Operation) (*ReportPositions, error) {
+	processPosition := &ReportPositions{}
 	countPositions := len(processPosition.CurrentPositions)
 	switch operation.Type {
 	// 2	Удержание НДФЛ по купонам.
 	// 8    Удержание налога по дивидендам.
-	case 2, 8:
+	case WithholdingOfPersonalIncomeTaxOnCoupons, WithholdingOfPersonalIncomeTaxOnDividends:
 		if countPositions != 0 {
 			for i := range processPosition.CurrentPositions {
 				processPosition.CurrentPositions[i].TotalDividend += operation.Payment / float64(countPositions)
 			}
 		}
 		// 10	Частичное погашение облигаций.
-	case 10:
+	case PartialRedemptionOfBonds:
 		if countPositions != 0 {
 			for i := range processPosition.CurrentPositions {
 				processPosition.CurrentPositions[i].PER += operation.Payment / float64(countPositions)
@@ -57,7 +74,7 @@ func ProcessPositions(processPosition *ReportPositions, operation Operation) {
 		// 15	Покупка ЦБ.
 		// 16	Покупка ЦБ с карты.
 		// 57   Перевод ценных бумаг с ИИС на Брокерский счет
-	case 15, 16, 57:
+	case PurchaseOfSecurities, PurchaseOfSecuritiesWithACard, TransferOfSecuritiesFromIISToABrokerageAccount:
 		position := SharePosition{
 			Name:           operation.Name,
 			BuyDate:        operation.Date,
@@ -82,7 +99,7 @@ func ProcessPositions(processPosition *ReportPositions, operation Operation) {
 			processPosition.CurrentPositions = append(processPosition.CurrentPositions, position)
 		}
 		// 17	Перевод ценных бумаг из другого депозитария.
-	case 17:
+	case TransferOfSecuritiesFromAnotherDepository:
 		position := SharePosition{
 			Name:           operation.Name,
 			BuyDate:        operation.Date,
@@ -104,25 +121,25 @@ func ProcessPositions(processPosition *ReportPositions, operation Operation) {
 		}
 		// Для Евротранса исключение
 		if operation.InstrumentUid == "02b2ea14-3c4b-47e8-9548-45a8dbcc8f8a" {
-			position.BuyPrice = 240
+			position.BuyPrice = EuroTransBuyCost
 		}
 		// Для каждой купленной бумаги добавляю SharePosition
 		for i := int64(0); i < operation.QuantityDone; i++ {
 			processPosition.CurrentPositions = append(processPosition.CurrentPositions, position)
 		}
 		// 19	Удержание комиссии за операцию.
-	case 19:
+	case WithhouldingACommissionForTheTransaction:
 		// Посчитали комисссию в операции покупки(15) и операции продажи(22)
 
 		// 21	Выплата дивидендов.
-	case 21:
+	case PaymentOfDividends:
 		if countPositions != 0 {
 			for i := range processPosition.CurrentPositions {
 				processPosition.CurrentPositions[i].TotalDividend += operation.Payment / float64(countPositions)
 			}
 		}
 		// 22	Продажа ЦБ.
-	case 22:
+	case SaleOfSecurities:
 		quantitySell := operation.QuantityDone
 		for i := range int(quantitySell) {
 			// Сократим название переменной
@@ -157,22 +174,22 @@ func ProcessPositions(processPosition *ReportPositions, operation Operation) {
 		}
 		processPosition.ClosePostion = append(processPosition.ClosePostion, processPosition.CurrentPositions[:quantitySell]...)
 		processPosition.CurrentPositions = processPosition.CurrentPositions[quantitySell:]
-
-	case 23:
+		// 23 Выплата купонов.
+	case PaymentOfCoupons:
 		if countPositions != 0 {
 			for i := range processPosition.CurrentPositions {
 				processPosition.CurrentPositions[i].TotalCoupon += operation.Payment / float64(countPositions)
 			}
 		}
 		// 47	Гербовый сбор.
-	case 47:
+	case StampDuty:
 		if countPositions != 0 {
 			for i := range processPosition.CurrentPositions {
 				processPosition.CurrentPositions[i].TotalComission += operation.Payment / float64(countPositions)
 			}
 		}
 	}
-
+	return processPosition, nil
 }
 
 func UnionPositions(positions []SharePosition) []SharePosition {

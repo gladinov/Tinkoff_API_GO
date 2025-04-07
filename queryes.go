@@ -21,7 +21,6 @@ func PortfolioSqlQuery(accountId string) string {
         DROP TABLE IF EXISTS portfolio_%s;
         CREATE TABLE IF NOT EXISTS portfolio_%s (
             id integer primary key,
-            accountId                 TEXT,
             figi                      TEXT,
             instrumentType            TEXT,
             currency                  TEXT,
@@ -29,10 +28,8 @@ func PortfolioSqlQuery(accountId string) string {
             averagePositionPrice      REAL,
             expectedYield             REAL,
             currentNkd                REAL,
-            averagePositionPricePt    REAL,
             currentPrice              REAL,
             averagePositionPriceFifo  REAL,
-            quantityLots              REAL,
             blocked                   BOOLEAN,
             blockedLots               REAL,
             positionUid               TEXT,
@@ -54,7 +51,6 @@ func InsertPortfolioSQL(accountId string) string {
 
 	InsertPortfolioQuery := fmt.Sprintf(`
     INSERT INTO portfolio_%s (
-		AccountId,
         figi,
         instrumentType,
         currency,
@@ -62,10 +58,8 @@ func InsertPortfolioSQL(accountId string) string {
         averagePositionPrice,
         expectedYield,
         currentNkd,
-        averagePositionPricePt,
         currentPrice,
         averagePositionPriceFifo,
-        quantityLots,
         blocked,
         blockedLots,
         positionUid,
@@ -74,7 +68,7 @@ func InsertPortfolioSQL(accountId string) string {
         varMargin,
         expectedYieldFifo,
         dailyYield
-    	) VALUES (?,?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    	) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 		`, accountId)
 
 	return InsertPortfolioQuery
