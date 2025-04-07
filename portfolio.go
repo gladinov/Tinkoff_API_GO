@@ -78,6 +78,7 @@ func transPositions(client *investgo.Client, positions []*pb.PortfolioPosition, 
 			}
 			BondPosition.Identifiers.AssetUid = assetUidInstrumentUidMap[BondPosition.Identifiers.InstrumentUid]
 			BondPosition.GetBondsActionsFromPortfolio(client)
+			BondPosition.GetActionFromMoex()
 			account.Portfolio.BondPosions = append(account.Portfolio.BondPosions, BondPosition)
 		} else {
 			transPosionRet := PortfolioPosition{

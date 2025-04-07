@@ -11,36 +11,13 @@ import (
 	"time"
 
 	_ "github.com/mattn/go-sqlite3"
-	"github.com/russianinvestments/invest-api-go-sdk/investgo"
 )
 
-type Bond struct {
-	Identifiers              Identifiers
-	Name                     string         // GetBondsActionsFromPortfolio
-	InstrumentType           string         // T_Api_Getportfolio
-	Currency                 string         // T_Api_Getportfolio
-	Quantity                 float64        // T_Api_Getportfolio
-	AveragePositionPrice     float64        // T_Api_Getportfolio
-	ExpectedYield            float64        // T_Api_Getportfolio
-	CurrentNkd               float64        // T_Api_Getportfolio
-	CurrentPrice             float64        // T_Api_Getportfolio
-	AveragePositionPriceFifo float64        // T_Api_Getportfolio
-	Blocked                  bool           // T_Api_Getportfolio
-	ExpectedYieldFifo        float64        // T_Api_Getportfolio
-	DailyYield               float64        // T_Api_Getportfolio
-	Amortizations            *Amortizations `json:"amortizations"` // GetBondsActionsFromPortfolio
-	Coupons                  *Coupons       `json:"coupons"`       // GetBondsActionsFromPortfolio
-	Offers                   *Offers        `json:"offers"`        // GetBondsActionsFromPortfolio
-	Duration                 Duration       // GetBondsActionsFromPortfolio
-}
-
-type Identifiers struct {
-	Ticker        string // GetBondsActionsFromPortfolio
-	ClassCode     string // GetBondsActionsFromPortfolio
-	Figi          string // T_Api_Getportfolio
-	InstrumentUid string // T_Api_Getportfolio
-	PositionUid   string // T_Api_Getportfolio
-	AssetUid      string // GetBondsActionsFromPortfolio
+type MoexUnmarshallStruct struct {
+	Amortizations *Amortizations `json:"amortizations"` // GetBondsActionsFromPortfolio
+	Coupons       *Coupons       `json:"coupons"`       // GetBondsActionsFromPortfolio
+	Offers        *Offers        `json:"offers"`        // GetBondsActionsFromPortfolio
+	Duration      Duration       // GetBondsActionsFromPortfolio
 }
 
 type Amortizations struct {
@@ -222,9 +199,9 @@ func (d *Duration) UnmarshalJSON(data []byte) error {
 }
 
 // Получение Амортизации, купонов и офферов с MOEX
-func (b *Bond) GetBondsFromMOEX(start, limit int) error {
+func (b *MoexUnmarshallStruct) GetBondsFromMOEX(ticker string, start, limit int) error {
 	client := http.Client{Timeout: 3 * time.Second}
-	uri := fmt.Sprintf("https://iss.moex.com/iss/securities/%s/bondization.json", b.Identifiers.Ticker)
+	uri := fmt.Sprintf("https://iss.moex.com/iss/securities/%s/bondization.json", ticker)
 
 	req, err := http.NewRequest(http.MethodGet, uri, nil)
 	if err != nil {
@@ -247,7 +224,7 @@ func (b *Bond) GetBondsFromMOEX(start, limit int) error {
 			return errors.New("GetBondsFromMoex: io.ReadAll" + err.Error())
 		}
 
-		var data Bond
+		var data MoexUnmarshallStruct
 		err = json.Unmarshal(body, &data)
 		if err != nil {
 			return errors.New("GetBondsFromMoex: json.Unmarshall" + err.Error())
@@ -272,9 +249,7 @@ func (b *Bond) GetBondsFromMOEX(start, limit int) error {
 }
 
 // Получение значения дюрации с MOEX
-func (b *Bond) GetDurationFromMoex() error {
-	ticker := b.Identifiers.Ticker
-	class_code := b.Identifiers.ClassCode
+func (b *MoexUnmarshallStruct) GetDurationFromMoex(ticker string, class_code string) error {
 	client := http.Client{Timeout: 3 * time.Second}
 	uri := fmt.Sprintf("https://iss.moex.com/iss/engines/stock/markets/bonds/boards/%s/securities/%s/securities.json", class_code, ticker)
 
@@ -305,35 +280,5 @@ func (b *Bond) GetDurationFromMoex() error {
 	}
 	b.Duration = data.Marketdata_yields.Data
 
-	return nil
-}
-
-func (b *Bond) GetBondsActionsFromPortfolio(client *investgo.Client) error {
-	err := b.GetTickerFromUid(client)
-	if err != nil {
-		return errors.New("GetBondsActionsFromPortfolio: GetBondsFromMOEX" + err.Error())
-	}
-	err = b.GetBondsFromMOEX(0, 20)
-	if err != nil {
-		return errors.New("GetBondsActionsFromPortfolio: GetBondsFromMOEX" + err.Error())
-	}
-	err = b.GetDurationFromMoex()
-	if err != nil {
-		return errors.New("GetBondsActionsFromPortfolio: GetBondsFromMOEX" + err.Error())
-	}
-
-	return nil
-}
-
-// получение ticker и class_code по uid
-func (b *Bond) GetTickerFromUid(client *investgo.Client) error {
-	instrumentService := client.NewInstrumentsServiceClient()
-	bondUid, err := instrumentService.BondByUid(b.Identifiers.InstrumentUid)
-	if err != nil {
-		return errors.New("GetTickerFromUid: instrumentService.BondByUid" + err.Error())
-	}
-	b.Identifiers.Ticker = bondUid.BondResponse.Instrument.GetTicker()
-	b.Identifiers.ClassCode = bondUid.BondResponse.Instrument.GetClassCode()
-	b.Name = bondUid.BondResponse.Instrument.GetName()
 	return nil
 }
