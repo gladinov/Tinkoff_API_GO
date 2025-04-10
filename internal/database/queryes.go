@@ -103,8 +103,6 @@ func OperationSqlQuery(accountId string) string {
         yield                   REAL,
         yield_relative          REAL,
         accrued_int             REAL,
-        quantity                INTEGER,
-        quantity_rest           INTEGER,
         quantity_done           INTEGER,
         cancel_date_time        TEXT, 
         cancel_reason           TEXT,
@@ -142,43 +140,41 @@ func InsertOperationsSQL(accountId string) string {
         yield,
         yield_relative,
         accrued_int,
-        quantity,
-        quantity_rest,
         quantity_done,
         cancel_date_time,
         cancel_reason,
         asset_uid
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `, accountId)
 
 	return InsertOperationQuery
 }
 
-func InsertActionsMoexSqlQuery() string {
-	PortfolioQuery := `
-        DROP TABLE IF EXISTS amortization;
-        CREATE TABLE IF NOT EXISTS amortization(
-            id integer primary key,
-            isin                 TEXT,
-            name                      TEXT,
-            issuevalue            TEXT,
-            coupondate                  TEXT,
-            recorddate                  REAL,
-            startdate      REAL,
-            initialfacevalue             REAL,
-            facevalue                REAL,
-            faceunit    REAL,
-            currentPrice              REAL,
-            averagePositionPriceFifo  REAL,
-            quantityLots              REAL,
-            blocked                   BOOLEAN,
-            blockedLots               REAL,
-            positionUid               TEXT,
-            instrumentUid             TEXT,
-            varMargin                 REAL,
-            expectedYieldFifo         REAL,
-            dailyYield                REAL
-        );`
+// func InsertActionsMoexSqlQuery() string {
+// 	PortfolioQuery := `
+//         DROP TABLE IF EXISTS amortization;
+//         CREATE TABLE IF NOT EXISTS amortization(
+//             id integer primary key,
+//             isin                 TEXT,
+//             name                      TEXT,
+//             issuevalue            TEXT,
+//             coupondate                  TEXT,
+//             recorddate                  REAL,
+//             startdate      REAL,
+//             initialfacevalue             REAL,
+//             facevalue                REAL,
+//             faceunit    REAL,
+//             currentPrice              REAL,
+//             averagePositionPriceFifo  REAL,
+//             quantityLots              REAL,
+//             blocked                   BOOLEAN,
+//             blockedLots               REAL,
+//             positionUid               TEXT,
+//             instrumentUid             TEXT,
+//             varMargin                 REAL,
+//             expectedYieldFifo         REAL,
+//             dailyYield                REAL
+//         );`
 
-	return PortfolioQuery
-}
+// 	return PortfolioQuery
+// }

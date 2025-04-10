@@ -18,9 +18,8 @@ import (
 )
 
 func main() {
-
 	// загружаем конфигурацию для сдк из .yaml файла
-	config, err := investgo.LoadConfig("config.yaml")
+	config, err := investgo.LoadConfig("../configs/config.yaml")
 	if err != nil {
 		log.Fatalf("config loading error %v", err.Error())
 	}
@@ -57,16 +56,13 @@ func main() {
 		}
 	}()
 
-	// создаем клиента для сервиса счетов
 	// Получаем все аккаунты, доступные по данном токену
-	usersService := client.NewUsersServiceClient()
-
 	// Результатом будет MAP по ключу номер_аккаунта и значениям типа Аккаунт
-	accsList := tinkoff_api.GetAcc(logger, usersService)
-
+	accsList, err := tinkoff_api.GetAcc(logger, client)
+	if err != nil {
+		logger.Errorf("Main. GetAcc error %v", err.Error())
+	}
 	opereationsService := client.NewOperationsServiceClient()
-	//Создаем подключение к инструментам API
-
 	// Создаем БД
 	nameDB := "T_API.db"
 	database.BuildDB(nameDB)
@@ -78,27 +74,31 @@ func main() {
 	}
 
 	for _, account := range accsList {
+		// Запросы в tinkoff.Api
+
 		// Получаем данные по портфелям по кажому счету
 		err := tinkoff_api.GetPortf(client, &account)
 		if err != nil {
 			logger.Errorf("tinkoff_api.GetPortf error %v", err.Error())
 		}
+		// Трансформируем данные портфеля в структуру
 		portfolio := service.TransPositions(client, &account, assetUidInstrumentUidMap)
 		// Добавляем в базу данных
-		// AddPositions(nameDB, account)
+		database.AddPositions(nameDB, account.Id, portfolio.PortfolioPositions)
 		// получаем данные по операциям
 		err = tinkoff_api.GetOpp(opereationsService, &account)
 		if err != nil {
 			logger.Errorf("tinkoff_api.GetOpp error %v", err.Error())
 		}
+		// Приводим операции к удобной структуре
+		operations := service.TransOperations(account.Operations)
 		// добавляем операции в DB
-		database.AddPositions(nameDB, account, portfolio.PortfolioPositions)
+		database.AddOperations(nameDB, account.Id, operations)
 		for _, v := range portfolio.BondPosions {
-			fmt.Println(v)
 			fmt.Println()
+			fmt.Println(v.Name)
+			fmt.Println()
+			fmt.Println(database.GetOperationsFromDBByAssetUid(nameDB, v.Identifiers.AssetUid, account.Id))
 		}
 	}
-
-	// пробная версия получения тикера по uid
-
 }

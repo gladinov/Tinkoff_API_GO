@@ -1,6 +1,8 @@
 package tinkoff_api
 
 import (
+	"errors"
+
 	"github.com/russianinvestments/invest-api-go-sdk/investgo"
 	pb "github.com/russianinvestments/invest-api-go-sdk/proto"
 	"go.uber.org/zap"
@@ -20,12 +22,13 @@ type Account struct {
 }
 
 // Пооучаем список аккаунтов(счетов)
-func GetAcc(logger *zap.SugaredLogger, usersService *investgo.UsersServiceClient) map[string]Account {
+func GetAcc(logger *zap.SugaredLogger, client *investgo.Client) (map[string]Account, error) {
+	usersService := client.NewUsersServiceClient()
 	accounts := make(map[string]Account)
 	status := pb.AccountStatus_ACCOUNT_STATUS_OPEN // ПОтом надо обработать закрытые счета(например ИИС)
 	accsResp, err := usersService.GetAccounts(&status)
 	if err != nil {
-		logger.Errorf(err.Error())
+		return nil, errors.New("GetAcc: operationsService.GetOperationsByCursor" + err.Error())
 	} else {
 		accs := accsResp.GetAccounts()
 		for _, acc := range accs {
@@ -38,10 +41,8 @@ func GetAcc(logger *zap.SugaredLogger, usersService *investgo.UsersServiceClient
 				// AccessLevel: acc.GetAccessLevel(),
 			}
 			accounts[acc.GetId()] = account
-			// fmt.Printf("account id = %v\n", accId)
 		}
 	}
 
-	return accounts
-
+	return accounts, nil
 }

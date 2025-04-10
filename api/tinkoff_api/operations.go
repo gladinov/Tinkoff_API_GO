@@ -18,8 +18,8 @@ func GetOpp(
 	if err != nil {
 		return errors.New("GetOpp: operationsService.GetOperationsByCursor" + err.Error())
 	} else {
-		ops := operationsResp.GetOperationsByCursorResponse.GetItems()
-		account.Operations = append(account.Operations, ops...)
+		operations := operationsResp.GetOperationsByCursorResponse.GetItems()
+		account.Operations = append(account.Operations, operations...)
 		nextCursor := operationsResp.NextCursor
 		for nextCursor != "" {
 			operationsResp, err := operationsService.GetOperationsByCursor(&investgo.GetOperationsByCursorRequest{
@@ -31,8 +31,8 @@ func GetOpp(
 				return errors.New("GetOpp: operationsService.GetOperationsByCursor" + err.Error())
 			} else {
 				nextCursor = operationsResp.NextCursor
-				ops := operationsResp.GetOperationsByCursorResponse.Items
-				account.Operations = append(account.Operations, ops...)
+				operations := operationsResp.GetOperationsByCursorResponse.Items
+				account.Operations = append(account.Operations, operations...)
 			}
 		}
 

@@ -1,4 +1,5 @@
 T_API.db
 /internal/database/T_API.db
-/cmd/config.yaml
+/configs/config.yaml
 out.txt
+/archive

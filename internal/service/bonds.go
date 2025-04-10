@@ -26,6 +26,7 @@ type Bond struct {
 	Coupons                  *moex.Coupons       // GetBondsActionsFromPortfolio
 	Offers                   *moex.Offers        // GetBondsActionsFromPortfolio
 	Duration                 moex.Duration       // GetBondsActionsFromPortfolio
+	ReportPositions          ReportPositions
 }
 
 type Identifiers struct {
@@ -65,5 +66,10 @@ func (b *Bond) GetActionFromMoex() error {
 	b.Offers = MoexUnmarshallData.Offers
 	b.Coupons = MoexUnmarshallData.Coupons
 	b.Duration = MoexUnmarshallData.Duration
+	return nil
+}
+
+func (b *Bond) GetReportPositions() error {
+
 	return nil
 }

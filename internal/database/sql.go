@@ -2,10 +2,10 @@ package database
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"time"
 
-	"github.com/gothanks/myapp/api/tinkoff_api"
 	"github.com/gothanks/myapp/internal/service"
 	_ "github.com/mattn/go-sqlite3"
 )
@@ -21,7 +21,7 @@ func BuildDB(nameDB string) {
 }
 
 // Добавление позиций портфеля в БД
-func AddPositions(nameDB string, account tinkoff_api.Account, positions []service.PortfolioPosition) {
+func AddPositions(nameDB string, accountId string, positions []service.PortfolioPosition) {
 	dbPath := fmt.Sprintf("../internal/database/%s", nameDB)
 	// Открываем БД
 	db, err := sql.Open("sqlite3", dbPath)
@@ -33,18 +33,18 @@ func AddPositions(nameDB string, account tinkoff_api.Account, positions []servic
 
 	// Создаем таблицу в БД с динамическим названием портфель_аккаунт
 	{
-		_, err := db.Exec(PortfolioSqlQuery(account.Id))
+		_, err := db.Exec(PortfolioSqlQuery(accountId))
 		if err != nil {
 			panic(err)
 		}
-		fmt.Printf("✓ created table portfolio_%s\n", account.Id)
+		fmt.Printf("✓ created table portfolio_%s\n", accountId)
 
 	}
 	count := 0
 	// Добавляем позиции в таблицу БД с динамическим названием портфель_аккаунт
 	for _, vals := range positions {
 
-		_, err := db.Exec(InsertPortfolioSQL(account.Id),
+		_, err := db.Exec(InsertPortfolioSQL(accountId),
 			vals.Figi,
 			vals.InstrumentType,
 			vals.Currency,
@@ -71,14 +71,15 @@ func AddPositions(nameDB string, account tinkoff_api.Account, positions []servic
 		// positionId, err := res.LastInsertId()
 		// fmt.Printf("added new position: id=%d, error=%v\n", positionId, err)
 	}
-	fmt.Printf("✓ added %v positions in SQL table portfolio_%s\n", count, account.Id)
+	fmt.Printf("✓ added %v positions in SQL table portfolio_%s\n", count, accountId)
 
 }
 
 // Дописать
-func AddOperations(nameDB string, account tinkoff_api.Account, operations []service.Operation) {
+func AddOperations(nameDB string, accountId string, operations []service.Operation) {
+	dbPath := fmt.Sprintf("../internal/database/%s", nameDB)
 	// Открываем БД
-	db, err := sql.Open("sqlite3", nameDB)
+	db, err := sql.Open("sqlite3", dbPath)
 	if err != nil {
 		panic(err)
 	}
@@ -87,16 +88,16 @@ func AddOperations(nameDB string, account tinkoff_api.Account, operations []serv
 
 	// Создаем таблицу в БД с динамическим названием портфель_аккаунт
 	{
-		_, err := db.Exec(OperationSqlQuery(account.Id))
+		_, err := db.Exec(OperationSqlQuery(accountId))
 		if err != nil {
 			panic(err)
 		}
-		fmt.Printf("✓ created table operations_%s\n", account.Id)
+		fmt.Printf("✓ created table operations_%s\n", accountId)
 	}
 	count := 0
 	// Добавляем позиции в таблицу БД с динамическим названием портфель_аккаунт
 	for _, vals := range operations {
-		_, err := db.Exec(InsertOperationsSQL(account.Id),
+		_, err := db.Exec(InsertOperationsSQL(accountId),
 			vals.Currency,
 			vals.Cursor,
 			vals.BrokerAccountId,
@@ -118,8 +119,6 @@ func AddOperations(nameDB string, account tinkoff_api.Account, operations []serv
 			vals.Yield,
 			vals.YieldRelative,
 			vals.AccruedInt,
-			vals.Quantity,
-			vals.QuantityRest,
 			vals.QuantityDone,
 			vals.CancelDateTime.AsTime().Format(time.RFC3339),
 			vals.CancelReason,
@@ -134,7 +133,7 @@ func AddOperations(nameDB string, account tinkoff_api.Account, operations []serv
 		// positionId, err := res.LastInsertId()
 		// fmt.Printf("added new operations: id=%d, error=%v\n", positionId, err)
 	}
-	fmt.Printf("✓ added %v operations in SQL table opertions_%s\n", count, account.Id)
+	fmt.Printf("✓ added %v operations in SQL table opertions_%s\n", count, accountId)
 }
 
 func AddTickerUid(nameDB string, uidTicker map[string][]string) {
@@ -180,4 +179,46 @@ func AddTickerUid(nameDB string, uidTicker map[string][]string) {
 	}
 	fmt.Printf("✓ added %v operations in SQL table uidTicker \n", count)
 
+}
+
+func GetOperationsFromDBByAssetUid(nameDB, assetUid, accountId string) ([]service.OperationDB, error) {
+	dbPath := fmt.Sprintf("../internal/database/%s", nameDB)
+	// Открываем БД
+	db, err := sql.Open("sqlite3", dbPath)
+	if err != nil {
+		return nil, errors.New("GetOperationsFromDB: sql.Open" + err.Error())
+	}
+	query := fmt.Sprintf("select name,date, figi, operation_id,quantity_done,instrument_type,instrument_uid,price,currency,accrued_int,commission, payment from operations_%s where asset_uid == '%s'", accountId, assetUid)
+	rows, err := db.Query(query)
+	if err != nil {
+		return nil, errors.New("GetOperationsFromDB: db.Query" + err.Error())
+	}
+	defer rows.Close()
+
+	operationRes := make([]service.OperationDB, 0)
+
+	for rows.Next() {
+		var operation service.OperationDB
+		err := rows.Scan(&operation.Name,
+			&operation.Date,
+			&operation.Figi,
+			&operation.Operation_Id,
+			&operation.QuantityDone,
+			&operation.InstrumentType,
+			&operation.InstrumentUid,
+			&operation.Price,
+			&operation.Currency,
+			&operation.AccruedInt,
+			&operation.Commission,
+			&operation.Payment)
+		if err != nil {
+			return nil, errors.New("GetOperationsFromDB: rows.Scan" + err.Error())
+		}
+		operationRes = append(operationRes, operation)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, errors.New("GetOperationsFromDB: rows.Err()" + err.Error())
+	}
+
+	return operationRes, nil
 }
