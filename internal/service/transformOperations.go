@@ -1,9 +1,10 @@
 package service
 
 import (
+	"time"
+
 	"github.com/gothanks/myapp/other_func"
 	pb "github.com/russianinvestments/invest-api-go-sdk/proto"
-	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 type Operation struct {
@@ -13,7 +14,7 @@ type Operation struct {
 	Operation_Id      string
 	ParentOperationId string
 	Name              string
-	Date              *timestamppb.Timestamp
+	Date              time.Time // Время в UTC
 	Type              int64
 	Description       string
 	State             int64
@@ -29,7 +30,7 @@ type Operation struct {
 	YieldRelative     float64
 	AccruedInt        float64
 	QuantityDone      float64
-	CancelDateTime    *timestamppb.Timestamp
+	CancelDateTime    time.Time
 	CancelReason      string
 	TradesInfo        *pb.OperationItemTrades
 	AssetUid          string
@@ -52,7 +53,7 @@ type OperationDB struct {
 }
 
 // Приводим операции к удобной структуре
-func TransOperations(operations []*pb.OperationItem) []Operation {
+func TransOperations(operations []*pb.OperationItem) ([]Operation) {
 	transformOperations := make([]Operation, 0)
 	for _, v := range operations {
 		transformOperation := Operation{
@@ -62,7 +63,7 @@ func TransOperations(operations []*pb.OperationItem) []Operation {
 			Operation_Id:      v.GetId(),
 			ParentOperationId: v.GetParentOperationId(),
 			Name:              v.GetName(),
-			Date:              v.GetDate(),
+			Date:              v.Date.AsTime(),
 			Type:              int64(v.GetType()),
 			Description:       v.GetDescription(),
 			State:             int64(v.GetState()),
@@ -78,12 +79,13 @@ func TransOperations(operations []*pb.OperationItem) []Operation {
 			YieldRelative:     other_func.CastMoney(v.GetYieldRelative()),
 			AccruedInt:        other_func.MoneyValue(v.GetAccruedInt()),
 			QuantityDone:      float64(v.GetQuantityDone()),
-			CancelDateTime:    v.GetCancelDateTime(),
+			CancelDateTime:    v.CancelDateTime.AsTime(),
 			CancelReason:      v.GetCancelReason(),
 			TradesInfo:        v.GetTradesInfo(),
 			AssetUid:          v.GetAssetUid(),
 			ChildOperations:   v.GetChildOperations(),
 		}
+
 		transformOperations = append(transformOperations, transformOperation)
 	}
 	return transformOperations

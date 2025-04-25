@@ -92,13 +92,15 @@ func main() {
 		}
 		// Приводим операции к удобной структуре
 		operations := service.TransOperations(account.Operations)
+
 		// добавляем операции в DB
 		database.AddOperations(nameDB, account.Id, operations)
-		for _, v := range portfolio.BondPosions {
+		for _, v := range portfolio.BondPositions {
 			fmt.Println()
 			fmt.Println(v.Name)
 			fmt.Println()
-			fmt.Println(database.GetOperationsFromDBByAssetUid(nameDB, v.Identifiers.AssetUid, account.Id))
+			operationsDb, _ := database.GetOperationsFromDBByAssetUid(nameDB, v.Identifiers.AssetUid, account.Id)
+			fmt.Println(operationsDb)
 		}
 	}
 }

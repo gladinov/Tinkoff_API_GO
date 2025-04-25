@@ -104,7 +104,7 @@ func AddOperations(nameDB string, accountId string, operations []service.Operati
 			vals.Operation_Id,
 			vals.ParentOperationId,
 			vals.Name,
-			vals.Date.AsTime().Format(time.RFC3339),
+			vals.Date.Format(time.RFC3339),
 			vals.Type,
 			vals.Description,
 			vals.State,
@@ -120,7 +120,7 @@ func AddOperations(nameDB string, accountId string, operations []service.Operati
 			vals.YieldRelative,
 			vals.AccruedInt,
 			vals.QuantityDone,
-			vals.CancelDateTime.AsTime().Format(time.RFC3339),
+			vals.CancelDateTime.Format(time.RFC3339),
 			vals.CancelReason,
 			vals.AssetUid,
 		)

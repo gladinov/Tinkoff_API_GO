@@ -2,8 +2,7 @@ package service
 
 import (
 	"errors"
-
-	"google.golang.org/protobuf/types/known/timestamppb"
+	"time"
 )
 
 const (
@@ -31,8 +30,8 @@ type ReportPositions struct {
 
 type SharePosition struct {
 	Name               string
-	BuyDate            *timestamppb.Timestamp
-	SellDate           *timestamppb.Timestamp
+	BuyDate            time.Time
+	SellDate           time.Time
 	BuyCursor          string
 	SellCursor         string
 	BuyOperationID     string

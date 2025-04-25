@@ -11,7 +11,7 @@ import (
 
 type Portfolio struct {
 	PortfolioPositions []PortfolioPosition
-	BondPosions        []Bond
+	BondPositions      []Bond
 }
 
 type PortfolioPosition struct {
@@ -65,7 +65,7 @@ func TransPositions(client *investgo.Client,
 			BondPosition.GetBondsActionsFromPortfolio(client)
 			//  Получение данных с московской биржи
 			BondPosition.GetActionFromMoex()
-			Portfolio.BondPosions = append(Portfolio.BondPosions, BondPosition)
+			Portfolio.BondPositions = append(Portfolio.BondPositions, BondPosition)
 		} else {
 			transPosionRet := PortfolioPosition{
 				Figi:                     v.GetFigi(),
@@ -90,7 +90,7 @@ func TransPositions(client *investgo.Client,
 		}
 	}
 	fmt.Printf("✓ Добавлено %v позиций в Account.PortfolioPositions по счету %s\n", len(Portfolio.PortfolioPositions), account.Id)
-	fmt.Printf("✓ Добавлено %v позиций в Account.PortfolioBondPositions по счету %s\n", len(Portfolio.BondPosions), account.Id)
+	fmt.Printf("✓ Добавлено %v позиций в Account.PortfolioBondPositions по счету %s\n", len(Portfolio.BondPositions), account.Id)
 	return Portfolio
 }
 

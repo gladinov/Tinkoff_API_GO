@@ -3,3 +3,4 @@ T_API.db
 /configs/config.yaml
 out.txt
 /archive
+/configs/tokens.yaml

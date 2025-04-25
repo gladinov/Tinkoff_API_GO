@@ -27,8 +27,8 @@ end:
 			}
 			// Рассчитываем срок владения
 			closePosition.SellDate = operation.Date
-			buyDate := closePosition.BuyDate.AsTime()
-			sellDate := closePosition.SellDate.AsTime()
+			buyDate := closePosition.BuyDate
+			sellDate := closePosition.SellDate
 			timeDuration := sellDate.Sub(buyDate)
 			// Плюсуем комиссию за продажу бумаг
 			if buyQuantity != 0 {
@@ -66,8 +66,8 @@ end:
 			closePosition.TotalComission = closePosition.TotalComission + operation.Commission
 			// Рассчитываем срок владения
 			closePosition.SellDate = operation.Date
-			buyDate := closePosition.BuyDate.AsTime()
-			sellDate := closePosition.SellDate.AsTime()
+			buyDate := closePosition.BuyDate
+			sellDate := closePosition.SellDate
 			timeDuration := sellDate.Sub(buyDate)
 			// Рассчитываем налог с продажи бумаги, если сумма продажи больше суммы покупки
 			sellPrice := closePosition.SellPrice
@@ -103,8 +103,8 @@ end:
 			operation.Commission -= operation.Commission * proportion
 			// Рассчитываем срок владения
 			closePosition.SellDate = operation.Date
-			buyDate := closePosition.BuyDate.AsTime()
-			sellDate := closePosition.SellDate.AsTime()
+			buyDate := closePosition.BuyDate
+			sellDate := closePosition.SellDate
 			timeDuration := sellDate.Sub(buyDate)
 			// Рассчитываем налог с продажи бумаги, если сумма продажи больше суммы покупки
 			sellPrice := closePosition.SellPrice
