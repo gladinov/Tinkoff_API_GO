@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"time"
 
 	"github.com/gothanks/myapp/internal/service"
 	_ "github.com/mattn/go-sqlite3"
@@ -104,7 +103,7 @@ func AddOperations(nameDB string, accountId string, operations []service.Operati
 			vals.Operation_Id,
 			vals.ParentOperationId,
 			vals.Name,
-			vals.Date.Format(time.RFC3339),
+			vals.Date,
 			vals.Type,
 			vals.Description,
 			vals.State,
@@ -120,7 +119,7 @@ func AddOperations(nameDB string, accountId string, operations []service.Operati
 			vals.YieldRelative,
 			vals.AccruedInt,
 			vals.QuantityDone,
-			vals.CancelDateTime.Format(time.RFC3339),
+			vals.CancelDateTime,
 			vals.CancelReason,
 			vals.AssetUid,
 		)
@@ -181,26 +180,27 @@ func AddTickerUid(nameDB string, uidTicker map[string][]string) {
 
 }
 
-func GetOperationsFromDBByAssetUid(nameDB, assetUid, accountId string) ([]service.OperationDB, error) {
+func GetOperationsFromDBByAssetUid(nameDB, assetUid, accountId string) ([]service.Operation, error) {
 	dbPath := fmt.Sprintf("../internal/database/%s", nameDB)
 	// Открываем БД
 	db, err := sql.Open("sqlite3", dbPath)
 	if err != nil {
 		return nil, errors.New("GetOperationsFromDB: sql.Open" + err.Error())
 	}
-	query := fmt.Sprintf("select name,date, figi, operation_id,quantity_done,instrument_type,instrument_uid,price,currency,accrued_int,commission, payment from operations_%s where asset_uid == '%s'", accountId, assetUid)
+	query := fmt.Sprintf("select name,date,type, figi, operation_id,quantity_done,instrument_type,instrument_uid,price,currency,accrued_int,commission, payment from operations_%s where asset_uid == '%s' order by date", accountId, assetUid)
 	rows, err := db.Query(query)
 	if err != nil {
 		return nil, errors.New("GetOperationsFromDB: db.Query" + err.Error())
 	}
 	defer rows.Close()
 
-	operationRes := make([]service.OperationDB, 0)
+	operationRes := make([]service.Operation, 0)
 
 	for rows.Next() {
-		var operation service.OperationDB
+		var operation service.Operation
 		err := rows.Scan(&operation.Name,
 			&operation.Date,
+			&operation.Type,
 			&operation.Figi,
 			&operation.Operation_Id,
 			&operation.QuantityDone,

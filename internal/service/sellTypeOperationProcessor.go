@@ -1,10 +1,15 @@
 package service
 
-import "errors"
+import (
+	"errors"
+	"fmt"
+)
 
 // 22	Продажа ЦБ.
 func processSellOfSecurities(operation Operation, processPosition *ReportPositions) error {
 	processPosition.Quantity -= operation.QuantityDone
+	// //Счетчик кол-ва закрытых позиции при кол-ве проданных бумаг превышающее кол-во купленных бумаг
+	// endCount := 0
 end:
 	for i := range processPosition.CurrentPositions {
 		currPosition := &processPosition.CurrentPositions[i]
@@ -12,9 +17,9 @@ end:
 		sellQuantity := operation.QuantityDone
 		switch {
 		case buyQuantity > sellQuantity:
-			currPosition.Quantity -= sellQuantity
+			fmt.Println("buyQuantity > sellQuantity")
 			// Создаем операцию продажи бумаги
-			closePosition := currPosition
+			closePosition := *currPosition
 			closePosition.Quantity = operation.QuantityDone
 			closePosition.SellPrice = operation.Price
 			closePosition.SellPayment = operation.Payment
@@ -51,12 +56,15 @@ end:
 				return errors.New("divide by zero")
 			}
 			// Добавляем закрытую позицию в срез закрытых позиций
-			processPosition.ClosePositions = append(processPosition.ClosePositions, *closePosition)
+			processPosition.ClosePositions = append(processPosition.ClosePositions, closePosition)
+			// Отнимаем кол-во проданных бумаг от количества бумаг в текущей позиции
+			currPosition.Quantity -= sellQuantity
 			// Прерываем цикл
 			break end
 		case currPosition.Quantity == operation.QuantityDone:
+			fmt.Println("buyQuantity == sellQuantity")
 			// Создаем операцию продажи бумаги
-			closePosition := currPosition
+			closePosition := *currPosition
 			closePosition.SellPrice = operation.Price
 			closePosition.SellPayment = operation.Payment
 			closePosition.SellOperationID = operation.Operation_Id
@@ -84,14 +92,15 @@ end:
 				return errors.New("divide by zero")
 			}
 			// Добавляем закрытую позицию в срез закрытых позиций
-			processPosition.ClosePositions = append(processPosition.ClosePositions, *closePosition)
+			processPosition.ClosePositions = append(processPosition.ClosePositions, closePosition)
 			processPosition.CurrentPositions = processPosition.CurrentPositions[1:]
 			// Прерываем цикл
 			break end
 		case currPosition.Quantity < operation.QuantityDone:
+			fmt.Println("buyQuantity < sellQuantity")
 			proportion := currPosition.Quantity / operation.QuantityDone
 			// Создаем операцию продажи бумаги
-			closePosition := currPosition
+			closePosition := *currPosition
 			closePosition.SellPrice = operation.Price
 			closePosition.SellPayment = operation.Payment
 			closePosition.SellOperationID = operation.Operation_Id
@@ -121,10 +130,14 @@ end:
 				return errors.New("divide by zero")
 			}
 			// Добавляем закрытую позицию в срез закрытых позиций
-			processPosition.ClosePositions = append(processPosition.ClosePositions, *closePosition)
+			processPosition.ClosePositions = append(processPosition.ClosePositions, closePosition)
 			// Изменяем значение Quantity.Operation
-			operation.QuantityDone = currPosition.Quantity
+			operation.QuantityDone -= currPosition.Quantity
+			// Удаляем значение закрытой позиции из среза и уменьшаем значение "i" для
+			processPosition.CurrentPositions = processPosition.CurrentPositions[1:]
+			i--
 		}
+
 	}
 	return nil
 }

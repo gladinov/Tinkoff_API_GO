@@ -37,23 +37,8 @@ type Operation struct {
 	ChildOperations   []*pb.ChildOperationItem
 }
 
-type OperationDB struct {
-	Name           string
-	Date           string
-	Figi           string
-	Operation_Id   string
-	QuantityDone   float64
-	InstrumentType string
-	InstrumentUid  string
-	Price          float64
-	Currency       string
-	AccruedInt     float64
-	Commission     float64
-	Payment        float64
-}
-
 // Приводим операции к удобной структуре
-func TransOperations(operations []*pb.OperationItem) ([]Operation) {
+func TransOperations(operations []*pb.OperationItem) []Operation {
 	transformOperations := make([]Operation, 0)
 	for _, v := range operations {
 		transformOperation := Operation{

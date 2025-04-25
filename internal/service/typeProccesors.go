@@ -83,7 +83,8 @@ func processPaymentOfDividends(operation Operation, processPosition *ReportPosit
 	if processPosition.Quantity == 0 {
 		return errors.New("divide by zero")
 	} else {
-		for _, currentPosition := range processPosition.CurrentPositions {
+		for i := range processPosition.CurrentPositions {
+			currentPosition := &processPosition.CurrentPositions[i]
 			proportion := currentPosition.Quantity / processPosition.Quantity
 			// Минус, т.к. operation.Payment с отрицательным знаком в отчете
 			currentPosition.TotalDividend += operation.Payment * proportion
@@ -97,7 +98,8 @@ func processPaymentOfCoupons(operation Operation, processPosition *ReportPositio
 	if processPosition.Quantity == 0 {
 		return errors.New("divide by zero")
 	} else {
-		for _, currentPosition := range processPosition.CurrentPositions {
+		for i := range processPosition.CurrentPositions {
+			currentPosition := &processPosition.CurrentPositions[i]
 			proportion := currentPosition.Quantity / processPosition.Quantity
 			// Минус, т.к. operation.Payment с отрицательным знаком в отчете
 			currentPosition.TotalCoupon += operation.Payment * proportion
@@ -111,7 +113,8 @@ func processStampDuty(operation Operation, processPosition *ReportPositions) err
 	if processPosition.Quantity == 0 {
 		return errors.New("divide by zero")
 	} else {
-		for _, currentPosition := range processPosition.CurrentPositions {
+		for i := range processPosition.CurrentPositions {
+			currentPosition := &processPosition.CurrentPositions[i]
 			proportion := currentPosition.Quantity / processPosition.Quantity
 			// Минус, т.к. operation.Payment с отрицательным знаком в отчете
 			currentPosition.TotalComission += operation.Payment * proportion

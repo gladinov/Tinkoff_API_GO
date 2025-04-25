@@ -88,7 +88,7 @@ func OperationSqlQuery(accountId string) string {
         operation_id            TEXT,
         parent_operation_id     TEXT,
         name                    TEXT,
-        date                    TEXT, 
+        date                    DATETIME, 
         type                    INTEGER,
         description             TEXT,
         state                   INTEGER,
@@ -104,7 +104,7 @@ func OperationSqlQuery(accountId string) string {
         yield_relative          REAL,
         accrued_int             REAL,
         quantity_done           INTEGER,
-        cancel_date_time        TEXT, 
+        cancel_date_time        DATETIME, 
         cancel_reason           TEXT,
         asset_uid               TEXT
     );`, accountId, accountId)
