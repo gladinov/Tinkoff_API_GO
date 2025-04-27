@@ -4,3 +4,4 @@ T_API.db
 out.txt
 /archive
 /configs/tokens.yaml
+.gitignore
