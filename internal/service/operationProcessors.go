@@ -19,7 +19,8 @@ const (
 	StampDuty                                      = 47    // 47	Гербовый сбор.
 	TransferOfSecuritiesFromIISToABrokerageAccount = 57    // 57   Перевод ценных бумаг с ИИС на Брокерский счет
 	EuroTransBuyCost                               = 240   //Стоимость Евротранса при переводе из другого депозитария
-	threeYearInHour                                = 26304 // Три года в часах
+	threeYearInHours                               = 26304 // Три года в часах
+	baseTaxRate                                    = 0.13  // Налог с продажи ЦБ
 )
 
 type ReportPositions struct {
@@ -29,32 +30,31 @@ type ReportPositions struct {
 }
 
 type SharePosition struct {
-	Name               string
-	BuyDate            time.Time
-	SellDate           time.Time
-	BuyCursor          string
-	SellCursor         string
-	BuyOperationID     string
-	SellOperationID    string
-	Quantity           float64
-	Figi               string
-	InstrumentType     string
-	InstrumentUid      string
-	BuyPrice           float64
-	SellPrice          float64
-	CurrentPrice       float64
-	BuyPayment         float64
-	SellPayment        float64
-	Currency           string
-	BuyAccruedInt      float64 // НКД при покупке
-	SellAccruedInt     float64
-	PER                float64 // Частичное досрочное гашение
-	TotalCoupon        float64
-	TotalDividend      float64
-	TotalComission     float64
-	TotalTax           float64
-	PositionProfit     float64
-	ProfitInPercentage float64
+	Name                  string
+	BuyDate               time.Time
+	SellDate              time.Time
+	BuyOperationID        string
+	SellOperationID       string
+	Quantity              float64
+	Figi                  string
+	InstrumentType        string
+	InstrumentUid         string
+	BuyPrice              float64
+	SellPrice             float64
+	CurrentPrice          float64
+	BuyPayment            float64
+	SellPayment           float64
+	Currency              string
+	BuyAccruedInt         float64 // НКД при покупке
+	SellAccruedInt        float64
+	PartialEarlyRepayment float64 // Частичное досрочное гашение
+	TotalCoupon           float64
+	TotalDividend         float64
+	TotalComission        float64
+	PaidTax               float64 // Фактически уплаченный налог(Часть налога будет уплачена в конце года, либо при выводе средств)
+	TotalTax              float64 // Налог рассчитанный
+	PositionProfit        float64 // С учетом рассчитанных налогов(TotalTax)
+	ProfitInPercentage    float64 // В десятичной дроби
 }
 
 func ProcessOperations(operations []Operation) (*ReportPositions, error) {
@@ -114,7 +114,7 @@ func ProcessOperations(operations []Operation) (*ReportPositions, error) {
 			if operation.QuantityDone == 0 {
 				continue
 			} else {
-				err := processSellOfSecurities(operation, processPosition)
+				err := processSellOfSecurities(&operation, processPosition)
 				if err != nil {
 					return nil, errors.New("ProcessOperations: processSellOfSecurities" + err.Error())
 				}

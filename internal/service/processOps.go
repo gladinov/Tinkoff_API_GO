@@ -8,9 +8,10 @@ func processWithholdingOfPersonalIncomeTaxOnCouponsOrDividends(operation Operati
 	if processPosition.Quantity == 0 {
 		return errors.New("divide by zero")
 	} else {
-		for _, currentPosition := range processPosition.CurrentPositions {
+		for i := range processPosition.CurrentPositions {
+			currentPosition := &processPosition.CurrentPositions[i]
 			proportion := currentPosition.Quantity / processPosition.Quantity
-			currentPosition.TotalTax += operation.Payment * proportion
+			currentPosition.PaidTax += operation.Payment * proportion
 		}
 	}
 	return nil
@@ -21,9 +22,10 @@ func processPartialRedemptionOfBonds(operation Operation, processPosition *Repor
 	if processPosition.Quantity == 0 {
 		return errors.New("divide by zero")
 	} else {
-		for _, currentPosition := range processPosition.CurrentPositions {
+		for i := range processPosition.CurrentPositions {
+			currentPosition := &processPosition.CurrentPositions[i]
 			proportion := currentPosition.Quantity / processPosition.Quantity
-			currentPosition.PER += operation.Payment * proportion
+			currentPosition.PartialEarlyRepayment += operation.Payment * proportion
 		}
 	}
 	return nil

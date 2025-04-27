@@ -62,68 +62,69 @@ func main() {
 	if err != nil {
 		logger.Errorf("Main. GetAcc error %v", err.Error())
 	}
-	// opereationsService := client.NewOperationsServiceClient()
-	// // Создаем БД
-	// nameDB := "T_API.db"
-	// database.BuildDB(nameDB)
-	// // Получаем связку InstrumentUid - AssetUid по всем бумагам в Т-Апи,
-	// //  т.к. по другому узнать assetUid по конкретной бумаге сервис возможности не дает
-	// assetUidInstrumentUidMap, err := service.GetAllAssetUids(client)
-	// if err != nil {
-	// 	logger.Errorf("assetUidInstrumentUidMap error %v", err.Error())
-	// }
+	opereationsService := client.NewOperationsServiceClient()
+	// Создаем БД
+	nameDB := "T_API.db"
+	database.BuildDB(nameDB)
+	// Получаем связку InstrumentUid - AssetUid по всем бумагам в Т-Апи,
+	//  т.к. по другому узнать assetUid по конкретной бумаге сервис возможности не дает
+	assetUidInstrumentUidMap, err := service.GetAllAssetUids(client)
+	if err != nil {
+		logger.Errorf("assetUidInstrumentUidMap error %v", err.Error())
+	}
 
 	for _, account := range accsList {
-		// // Запросы в tinkoff.Api
+		// Запросы в tinkoff.Api
 
-		// // Получаем данные по портфелям по кажому счету
-		// err := tinkoff_api.GetPortf(client, &account)
-		// if err != nil {
-		// 	logger.Errorf("tinkoff_api.GetPortf error %v", err.Error())
-		// }
-		// // Трансформируем данные портфеля в структуру
-		// portfolio := service.TransPositions(client, &account, assetUidInstrumentUidMap)
-		// // Добавляем в базу данных
-		// database.AddPositions(nameDB, account.Id, portfolio.PortfolioPositions)
-		// // получаем данные по операциям
-		// err = tinkoff_api.GetOpp(opereationsService, &account)
-		// if err != nil {
-		// 	logger.Errorf("tinkoff_api.GetOpp error %v", err.Error())
-		// }
-		// // Приводим операции к удобной структуре
-		// operations := service.TransOperations(account.Operations)
-
-		// // добавляем операции в DB
-		// database.AddOperations(nameDB, account.Id, operations)
-		// for _, v := range portfolio.BondPositions {
-		// 	fmt.Println()
-		// 	fmt.Println(v.Name)
-		// 	fmt.Println()
-		// 	operationsDb, _ := database.GetOperationsFromDBByAssetUid(nameDB, v.Identifiers.AssetUid, account.Id)
-		// 	// fmt.Println(operationsDb)
-		// 	resultBondPosition, _ := service.ProcessOperations(operationsDb)
-
-		// 	fmt.Println()
-		// 	fmt.Println("Quantity")
-		// 	fmt.Println(resultBondPosition.Quantity)
-		// 	fmt.Println()
-		// 	fmt.Println("CurrentPosition")
-		// 	fmt.Println()
-		// 	fmt.Println(resultBondPosition.CurrentPositions)
-		// 	fmt.Println()
-		// 	fmt.Println("ClosePosition")
-		// 	fmt.Println(resultBondPosition.ClosePositions)
-		// 	fmt.Println()
-		// }
-		nameDB := "T_API.db"
-		assetUid := "2f7bc936-dfda-438a-a27b-cad19b0b7f58"
-		operationsDb, _ := database.GetOperationsFromDBByAssetUid(nameDB, assetUid, account.Id)
-
-		// fmt.Println(operationsDb)
-		_, err := service.ProcessOperations(operationsDb)
+		// Получаем данные по портфелям по кажому счету
+		err := tinkoff_api.GetPortf(client, &account)
 		if err != nil {
-			fmt.Println(err)
+			logger.Errorf("tinkoff_api.GetPortf error %v", err.Error())
 		}
+		// Трансформируем данные портфеля в структуру
+		portfolio := service.TransPositions(client, &account, assetUidInstrumentUidMap)
+		// Добавляем в базу данных
+		database.AddPositions(nameDB, account.Id, portfolio.PortfolioPositions)
+		// получаем данные по операциям
+		err = tinkoff_api.GetOpp(opereationsService, &account)
+		if err != nil {
+			logger.Errorf("tinkoff_api.GetOpp error %v", err.Error())
+		}
+		// Приводим операции к удобной структуре
+		operations := service.TransOperations(account.Operations)
+
+		// добавляем операции в DB
+		database.AddOperations(nameDB, account.Id, operations)
+		for _, v := range portfolio.BondPositions {
+			fmt.Println()
+			fmt.Println(v.Name)
+			fmt.Println()
+			operationsDb, _ := database.GetOperationsFromDBByAssetUid(nameDB, v.Identifiers.AssetUid, account.Id)
+			// fmt.Println(operationsDb)
+			resultBondPosition, _ := service.ProcessOperations(operationsDb)
+			if len(resultBondPosition.ClosePositions) != 0 {
+				fmt.Println()
+				fmt.Println("Quantity")
+				fmt.Println(resultBondPosition.Quantity)
+				fmt.Println()
+				fmt.Println("CurrentPosition")
+				fmt.Println()
+				fmt.Println(resultBondPosition.CurrentPositions)
+				fmt.Println()
+				fmt.Println("ClosePosition")
+				fmt.Println(resultBondPosition.ClosePositions)
+				fmt.Println()
+			}
+		}
+		// nameDB := "T_API.db"
+		// assetUid := "2f7bc936-dfda-438a-a27b-cad19b0b7f58"
+		// operationsDb, _ := database.GetOperationsFromDBByAssetUid(nameDB, assetUid, account.Id)
+
+		// // fmt.Println(operationsDb)
+		// resultBondPosition, err := service.ProcessOperations(operationsDb)
+		// if err != nil {
+		// 	fmt.Println(err)
+		// }
 		// fmt.Println()
 		// fmt.Println("Quantity")
 		// fmt.Println(resultBondPosition.Quantity)
