@@ -137,17 +137,6 @@ func ProcessOperations(operations []Operation) (*ReportPositions, error) {
 			continue
 
 		}
-		// fmt.Println()
-		// fmt.Println("Кол-ВО", processPosition.Quantity, "ТИп", operation.Type)
-		// fmt.Println()
-		// fmt.Println("Текущие позиции")
-		// fmt.Println()
-		// fmt.Println(processPosition.CurrentPositions)
-		// fmt.Println()
-		// fmt.Println("Закрытые позиции")
-		// fmt.Println()
-		// fmt.Println(processPosition.ClosePositions)
-		// fmt.Println()
 	}
 	return processPosition, nil
 }

@@ -3,30 +3,27 @@ package service
 import (
 	"errors"
 
-	"github.com/gothanks/myapp/api/moex"
-
 	"github.com/russianinvestments/invest-api-go-sdk/investgo"
 )
 
 type Bond struct {
 	Identifiers              Identifiers
-	Name                     string              // GetBondsActionsFromPortfolio
-	InstrumentType           string              // T_Api_Getportfolio
-	Currency                 string              // T_Api_Getportfolio
-	Quantity                 float64             // T_Api_Getportfolio
-	AveragePositionPrice     float64             // T_Api_Getportfolio
-	ExpectedYield            float64             // T_Api_Getportfolio
-	CurrentNkd               float64             // T_Api_Getportfolio
-	CurrentPrice             float64             // T_Api_Getportfolio
-	AveragePositionPriceFifo float64             // T_Api_Getportfolio
-	Blocked                  bool                // T_Api_Getportfolio
-	ExpectedYieldFifo        float64             // T_Api_Getportfolio
-	DailyYield               float64             // T_Api_Getportfolio
-	Amortizations            *moex.Amortizations // GetBondsActionsFromPortfolio
-	Coupons                  *moex.Coupons       // GetBondsActionsFromPortfolio
-	Offers                   *moex.Offers        // GetBondsActionsFromPortfolio
-	Duration                 moex.Duration       // GetBondsActionsFromPortfolio
-	ReportPositions          ReportPositions
+	Name                     string  // GetBondsActionsFromPortfolio
+	InstrumentType           string  // T_Api_Getportfolio
+	Currency                 string  // T_Api_Getportfolio
+	Quantity                 float64 // T_Api_Getportfolio
+	AveragePositionPrice     float64 // T_Api_Getportfolio
+	ExpectedYield            float64 // T_Api_Getportfolio
+	CurrentNkd               float64 // T_Api_Getportfolio
+	CurrentPrice             float64 // T_Api_Getportfolio
+	AveragePositionPriceFifo float64 // T_Api_Getportfolio
+	Blocked                  bool    // T_Api_Getportfolio
+	ExpectedYieldFifo        float64 // T_Api_Getportfolio
+	DailyYield               float64 // T_Api_Getportfolio
+	// Amortizations            *moex.Amortizations // GetBondsActionsFromPortfolio
+	// Coupons                  *moex.Coupons       // GetBondsActionsFromPortfolio
+	// Offers                   *moex.Offers        // GetBondsActionsFromPortfolio
+	// Duration                 moex.Duration       // GetBondsActionsFromPortfolio
 }
 
 type Identifiers struct {
@@ -52,24 +49,19 @@ func (b *Bond) GetBondsActionsFromPortfolio(client *investgo.Client) error {
 }
 
 // Получение данных с московской биржи
-func (b *Bond) GetActionFromMoex() error {
-	MoexUnmarshallData := moex.MoexUnmarshallStruct{}
-	err := MoexUnmarshallData.GetBondsFromMOEX(b.Identifiers.Ticker, 0, 20)
-	if err != nil {
-		return errors.New("GetBondsActionsFromPortfolio: GetBondsFromMOEX" + err.Error())
-	}
-	err = MoexUnmarshallData.GetDurationFromMoex(b.Identifiers.Ticker, b.Identifiers.ClassCode)
-	if err != nil {
-		return errors.New("GetBondsActionsFromPortfolio: GetBondsFromMOEX" + err.Error())
-	}
-	b.Amortizations = MoexUnmarshallData.Amortizations
-	b.Offers = MoexUnmarshallData.Offers
-	b.Coupons = MoexUnmarshallData.Coupons
-	b.Duration = MoexUnmarshallData.Duration
-	return nil
-}
-
-func (b *Bond) GetReportPositions() error {
-
-	return nil
-}
+// func (b *Bond) GetActionFromMoex() error {
+// 	MoexUnmarshallData := moex.MoexUnmarshallStruct{}
+// 	err := MoexUnmarshallData.GetBondsFromMOEX(b.Identifiers.Ticker, 0, 20)
+// 	if err != nil {
+// 		return errors.New("GetBondsActionsFromPortfolio: GetBondsFromMOEX" + err.Error())
+// 	}
+// 	err = MoexUnmarshallData.GetDurationFromMoex(b.Identifiers.Ticker, b.Identifiers.ClassCode)
+// 	if err != nil {
+// 		return errors.New("GetBondsActionsFromPortfolio: GetBondsFromMOEX" + err.Error())
+// 	}
+// 	b.Amortizations = MoexUnmarshallData.Amortizations
+// 	b.Offers = MoexUnmarshallData.Offers
+// 	b.Coupons = MoexUnmarshallData.Coupons
+// 	b.Duration = MoexUnmarshallData.Duration
+// 	return nil
+// }

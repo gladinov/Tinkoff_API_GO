@@ -11,7 +11,7 @@ import (
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 
-	"github.com/gothanks/myapp/api/tinkoff_api"
+	"github.com/gothanks/myapp/api/tinkoffApi"
 	"github.com/gothanks/myapp/internal/database"
 	"github.com/gothanks/myapp/internal/service"
 	"github.com/russianinvestments/invest-api-go-sdk/investgo"
@@ -58,7 +58,7 @@ func main() {
 
 	// Получаем все аккаунты, доступные по данном токену
 	// Результатом будет MAP по ключу номер_аккаунта и значениям типа Аккаунт
-	accsList, err := tinkoff_api.GetAcc(logger, client)
+	accsList, err := tinkoffApi.GetAcc(logger, client)
 	if err != nil {
 		logger.Errorf("Main. GetAcc error %v", err.Error())
 	}
@@ -68,7 +68,7 @@ func main() {
 	database.BuildDB(nameDB)
 	// Получаем связку InstrumentUid - AssetUid по всем бумагам в Т-Апи,
 	//  т.к. по другому узнать assetUid по конкретной бумаге сервис возможности не дает
-	assetUidInstrumentUidMap, err := service.GetAllAssetUids(client)
+	assetUidInstrumentUidMap, err := tinkoffApi.GetAllAssetUids(client)
 	if err != nil {
 		logger.Errorf("assetUidInstrumentUidMap error %v", err.Error())
 	}
@@ -77,7 +77,7 @@ func main() {
 		// Запросы в tinkoff.Api
 
 		// Получаем данные по портфелям по кажому счету
-		err := tinkoff_api.GetPortf(client, &account)
+		err := tinkoffApi.GetPortf(client, &account)
 		if err != nil {
 			logger.Errorf("tinkoff_api.GetPortf error %v", err.Error())
 		}
@@ -86,7 +86,7 @@ func main() {
 		// Добавляем в базу данных
 		database.AddPositions(nameDB, account.Id, portfolio.PortfolioPositions)
 		// получаем данные по операциям
-		err = tinkoff_api.GetOpp(opereationsService, &account)
+		err = tinkoffApi.GetOpp(opereationsService, &account)
 		if err != nil {
 			logger.Errorf("tinkoff_api.GetOpp error %v", err.Error())
 		}
@@ -102,19 +102,19 @@ func main() {
 			operationsDb, _ := database.GetOperationsFromDBByAssetUid(nameDB, v.Identifiers.AssetUid, account.Id)
 			// fmt.Println(operationsDb)
 			resultBondPosition, _ := service.ProcessOperations(operationsDb)
-			if len(resultBondPosition.ClosePositions) != 0 {
-				fmt.Println()
-				fmt.Println("Quantity")
-				fmt.Println(resultBondPosition.Quantity)
-				fmt.Println()
-				fmt.Println("CurrentPosition")
-				fmt.Println()
-				fmt.Println(resultBondPosition.CurrentPositions)
-				fmt.Println()
-				fmt.Println("ClosePosition")
-				fmt.Println(resultBondPosition.ClosePositions)
-				fmt.Println()
-			}
+
+			fmt.Println()
+			fmt.Println("Quantity")
+			fmt.Println(resultBondPosition.Quantity)
+			fmt.Println()
+			fmt.Println("CurrentPosition")
+			fmt.Println()
+			fmt.Println(resultBondPosition.CurrentPositions)
+			fmt.Println()
+			fmt.Println("ClosePosition")
+			fmt.Println(resultBondPosition.ClosePositions)
+			fmt.Println()
+
 		}
 		// nameDB := "T_API.db"
 		// assetUid := "2f7bc936-dfda-438a-a27b-cad19b0b7f58"

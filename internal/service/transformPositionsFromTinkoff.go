@@ -1,10 +1,9 @@
 package service
 
 import (
-	"errors"
 	"fmt"
 
-	"github.com/gothanks/myapp/api/tinkoff_api"
+	"github.com/gothanks/myapp/api/tinkoffApi"
 	"github.com/gothanks/myapp/other_func"
 	"github.com/russianinvestments/invest-api-go-sdk/investgo"
 )
@@ -37,7 +36,7 @@ type PortfolioPosition struct {
 
 // Обрабатываем в нормальный формат портфеля
 func TransPositions(client *investgo.Client,
-	account *tinkoff_api.Account, assetUidInstrumentUidMap map[string]string) Portfolio {
+	account *tinkoffApi.Account, assetUidInstrumentUidMap map[string]string) Portfolio {
 	Portfolio := Portfolio{}
 	for _, v := range account.Portfolio {
 		if v.InstrumentType == "bond" {
@@ -64,7 +63,7 @@ func TransPositions(client *investgo.Client,
 			// Получаем Тикер, Режим торгов и Короткое имя инструмента
 			BondPosition.GetBondsActionsFromPortfolio(client)
 			//  Получение данных с московской биржи
-			BondPosition.GetActionFromMoex()
+			// BondPosition.GetActionFromMoex()
 			Portfolio.BondPositions = append(Portfolio.BondPositions, BondPosition)
 		} else {
 			transPosionRet := PortfolioPosition{
@@ -92,22 +91,4 @@ func TransPositions(client *investgo.Client,
 	fmt.Printf("✓ Добавлено %v позиций в Account.PortfolioPositions по счету %s\n", len(Portfolio.PortfolioPositions), account.Id)
 	fmt.Printf("✓ Добавлено %v позиций в Account.PortfolioBondPositions по счету %s\n", len(Portfolio.BondPositions), account.Id)
 	return Portfolio
-}
-
-func GetAllAssetUids(client *investgo.Client) (map[string]string, error) {
-	instrumentService := client.NewInstrumentsServiceClient()
-	answer, err := instrumentService.GetAssets()
-	if err != nil {
-		return nil, errors.New("GetAllAssetUids: instrumentService.GetAssets" + err.Error())
-	}
-	assetUidInstrumentUidMap := make(map[string]string)
-	for _, v := range answer.AssetsResponse.Assets {
-		asset_uid := v.Uid
-
-		for _, instrument := range v.Instruments {
-			instrument_uid := instrument.Uid
-			assetUidInstrumentUidMap[instrument_uid] = asset_uid
-		}
-	}
-	return assetUidInstrumentUidMap, nil
 }

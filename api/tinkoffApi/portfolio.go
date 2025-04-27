@@ -1,4 +1,4 @@
-package tinkoff_api
+package tinkoffApi
 
 import (
 	"errors"
