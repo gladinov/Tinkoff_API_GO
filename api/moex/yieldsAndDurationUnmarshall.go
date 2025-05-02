@@ -14,14 +14,14 @@ type History struct {
 }
 
 type Values struct {
-	TradeDate                 *string  `json:"TRADEDATE"`    // Торговая дата(на момент которой рассчитаны остальные данные)
-	MaturityDate              *string  `json:"MATDATE"`      // Дата погашения
-	OfferDate                 *string  `json:"OFFERDATE"`    // Дата Оферты
-	BuybackDate               *string  `json:"BUYBACKDATE"`  // дата обратного выкупа
-	YieldToMaturityOnPurchase *float64 `json:"YIELDCLOSE"`   // Доходность к погашению при покупке
-	YieldToOfferOnPurchase    *float64 `json:"YIELDTOOFFER"` // Доходность к оферте при покупке
-	FaceValue                 *float64 `json:"FACEVALUE"`    // номинальная стоимость облигации
-	Duration                  *float64 `json:"DURATION"`     // дюрация (средневзвешенный срок платежей)
+	TradeDate       *string  `json:"TRADEDATE"`    // Торговая дата(на момент которой рассчитаны остальные данные)
+	MaturityDate    *string  `json:"MATDATE"`      // Дата погашения
+	OfferDate       *string  `json:"OFFERDATE"`    // Дата Оферты
+	BuybackDate     *string  `json:"BUYBACKDATE"`  // дата обратного выкупа
+	YieldToMaturity *float64 `json:"YIELDCLOSE"`   // Доходность к погашению при покупке
+	YieldToOffer    *float64 `json:"YIELDTOOFFER"` // Доходность к оферте при покупке
+	FaceValue       *float64 `json:"FACEVALUE"`    // номинальная стоимость облигации
+	Duration        *float64 `json:"DURATION"`     // дюрация (средневзвешенный срок платежей)
 
 }
 
@@ -35,8 +35,8 @@ func (d *Values) UnmarshalJSON(data []byte) error {
 	d.MaturityDate = checkStringNull(dataSlice[1])
 	d.OfferDate = checkStringNull(dataSlice[2])
 	d.BuybackDate = checkStringNull(dataSlice[3])
-	d.YieldToMaturityOnPurchase = checkFloa64Null(dataSlice[4])
-	d.YieldToOfferOnPurchase = checkFloa64Null(dataSlice[5])
+	d.YieldToMaturity = checkFloa64Null(dataSlice[4])
+	d.YieldToOffer = checkFloa64Null(dataSlice[5])
 	d.FaceValue = checkFloa64Null(dataSlice[6])
 	d.Duration = checkFloa64Null(dataSlice[7])
 

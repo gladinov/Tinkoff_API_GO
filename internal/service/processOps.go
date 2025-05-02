@@ -1,6 +1,10 @@
 package service
 
-import "errors"
+import (
+	"errors"
+
+	"github.com/russianinvestments/invest-api-go-sdk/investgo"
+)
 
 // 2	Удержание НДФЛ по купонам.
 // 8    Удержание налога по дивидендам.
@@ -35,7 +39,7 @@ func processPartialRedemptionOfBonds(operation Operation, processPosition *Repor
 // 15	Покупка ЦБ.
 // 16	Покупка ЦБ с карты.
 // 57   Перевод ценных бумаг с ИИС на Брокерский счет
-func processPurchaseOfSecurities(operation Operation, processPosition *ReportPositions) {
+func processPurchaseOfSecurities(client *investgo.Client, operation Operation, processPosition *ReportPositions) error {
 	// при обработке фьючерсов и акций, где была маржтнальная позиция,
 	//  функцию надо переделать так, чтобы проверялось наличие позиций с отрицательным количеством бумаг(коротких позиций)
 	position := SharePosition{
@@ -51,12 +55,18 @@ func processPurchaseOfSecurities(operation Operation, processPosition *ReportPos
 		BuyAccruedInt:  operation.AccruedInt, // НКД при покупке
 		TotalComission: operation.Commission,
 	}
+	err := position.GetSpecificationsFromTinkoff(client)
+	if err != nil {
+		return errors.New("service:processPurchaseOfSecurities:" + err.Error())
+	}
+
 	processPosition.CurrentPositions = append(processPosition.CurrentPositions, position)
 	processPosition.Quantity += operation.QuantityDone
+	return nil
 }
 
 // 17	Перевод ценных бумаг из другого депозитария.
-func processTransferOfSecuritiesFromAnotherDepository(operation Operation, processPosition *ReportPositions) {
+func processTransferOfSecuritiesFromAnotherDepository(client *investgo.Client, operation Operation, processPosition *ReportPositions) error {
 	// при обработке фьючерсов и акций, где была маржтнальная позиция,
 	//  функцию надо переделать так, чтобы проверялось наличие позиций с отрицательным количеством бумаг(коротких позиций)
 	position := SharePosition{
@@ -76,8 +86,16 @@ func processTransferOfSecuritiesFromAnotherDepository(operation Operation, proce
 	if operation.InstrumentUid == "02b2ea14-3c4b-47e8-9548-45a8dbcc8f8a" {
 		position.BuyPrice = EuroTransBuyCost
 	}
+
+	err := position.GetSpecificationsFromTinkoff(client)
+	if err != nil {
+		return errors.New("service:processTransferOfSecuritiesFromAnotherDepository:" + err.Error())
+	}
+
 	processPosition.CurrentPositions = append(processPosition.CurrentPositions, position)
 	processPosition.Quantity += operation.QuantityDone
+
+	return nil
 }
 
 // 21	Выплата дивидендов.

@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"os/signal"
@@ -62,7 +63,7 @@ func main() {
 	if err != nil {
 		logger.Errorf("Main. GetAcc error %v", err.Error())
 	}
-	opereationsService := client.NewOperationsServiceClient()
+	// opereationsService := client.NewOperationsServiceClient()
 	// Создаем БД
 	nameDB := "T_API.db"
 	database.BuildDB(nameDB)
@@ -74,67 +75,58 @@ func main() {
 	}
 
 	for _, account := range accsList {
-		// Запросы в tinkoff.Api
-
-		// Получаем данные по портфелям по кажому счету
-		err := tinkoffApi.GetPortf(client, &account)
+		bondReport, err := getBondReports(account, client, assetUidInstrumentUidMap, nameDB)
 		if err != nil {
-			logger.Errorf("tinkoff_api.GetPortf error %v", err.Error())
+			logger.Errorf("main error %v", err.Error())
 		}
-		// Трансформируем данные портфеля в структуру
-		portfolio := service.TransPositions(client, &account, assetUidInstrumentUidMap)
-		// Добавляем в базу данных
-		database.AddPositions(nameDB, account.Id, portfolio.PortfolioPositions)
-		// получаем данные по операциям
-		err = tinkoffApi.GetOpp(opereationsService, &account)
-		if err != nil {
-			logger.Errorf("tinkoff_api.GetOpp error %v", err.Error())
-		}
-		// Приводим операции к удобной структуре
-		operations := service.TransOperations(account.Operations)
-
-		// добавляем операции в DB
-		database.AddOperations(nameDB, account.Id, operations)
-		for _, v := range portfolio.BondPositions {
-			fmt.Println()
-			fmt.Println(v.Name)
-			fmt.Println()
-			operationsDb, _ := database.GetOperationsFromDBByAssetUid(nameDB, v.Identifiers.AssetUid, account.Id)
-			// fmt.Println(operationsDb)
-			resultBondPosition, _ := service.ProcessOperations(operationsDb)
-
-			fmt.Println()
-			fmt.Println("Quantity")
-			fmt.Println(resultBondPosition.Quantity)
-			fmt.Println()
-			fmt.Println("CurrentPosition")
-			fmt.Println()
-			fmt.Println(resultBondPosition.CurrentPositions)
-			fmt.Println()
-			fmt.Println("ClosePosition")
-			fmt.Println(resultBondPosition.ClosePositions)
-			fmt.Println()
-
-		}
-		// nameDB := "T_API.db"
-		// assetUid := "2f7bc936-dfda-438a-a27b-cad19b0b7f58"
-		// operationsDb, _ := database.GetOperationsFromDBByAssetUid(nameDB, assetUid, account.Id)
-
-		// // fmt.Println(operationsDb)
-		// resultBondPosition, err := service.ProcessOperations(operationsDb)
-		// if err != nil {
-		// 	fmt.Println(err)
-		// }
-		// fmt.Println()
-		// fmt.Println("Quantity")
-		// fmt.Println(resultBondPosition.Quantity)
-		// fmt.Println()
-		// fmt.Println("CurrentPosition")
-		// fmt.Println()
-		// fmt.Println(resultBondPosition.CurrentPositions)
-		// fmt.Println()
-		// fmt.Println("ClosePosition")
-		// fmt.Println(resultBondPosition.ClosePositions)
-		// fmt.Println()
+		fmt.Println(account.Id)
+		fmt.Println()
+		fmt.Println(bondReport.BondsInRUB)
+		fmt.Println(bondReport.BondsInCNY)
+		fmt.Println()
+		err = database.AddBondReportsInDB(nameDB, account.Id, bondReport.BondsInRUB)
 	}
+}
+
+func getBondReports(account tinkoffApi.Account, client *investgo.Client, assetUidInstrumentUidMap map[string]string, nameDB string) (service.Report, error) {
+	var bondReport service.Report
+	opereationsService := client.NewOperationsServiceClient()
+	// Получаем данные по портфелям по кажому счету
+	err := tinkoffApi.GetPortf(client, &account)
+	if err != nil {
+		return bondReport, errors.New("getBondReports" + err.Error())
+	}
+	// Трансформируем данные портфеля в структуру
+	portfolio, err := service.TransPositions(client, &account, assetUidInstrumentUidMap)
+	if err != nil {
+		return bondReport, errors.New("getBondReports" + err.Error())
+	}
+	// Добавляем в базу данных
+	database.AddPositions(nameDB, account.Id, portfolio.PortfolioPositions)
+
+	// получаем данные по операциям
+	err = tinkoffApi.GetOpp(opereationsService, &account)
+	if err != nil {
+		return bondReport, errors.New("getBondReports" + err.Error())
+	}
+	// Приводим операции к удобной структуре
+	operations := service.TransOperations(account.Operations)
+	// добавляем операции в DB
+	database.AddOperations(nameDB, account.Id, operations)
+	for _, v := range portfolio.BondPositions {
+		operationsDb, err := database.GetOperationsFromDBByAssetUid(nameDB, v.Identifiers.AssetUid, account.Id)
+		if err != nil {
+			return bondReport, errors.New("getBondReports" + err.Error())
+		}
+		resultBondPosition, err := service.ProcessOperations(client, operationsDb)
+		if err != nil {
+			return bondReport, errors.New("getBondReports" + err.Error())
+		}
+		err = bondReport.CreateBondReport(*resultBondPosition)
+		if err != nil {
+			return bondReport, errors.New("getBondReports" + err.Error())
+		}
+
+	}
+	return bondReport, nil
 }

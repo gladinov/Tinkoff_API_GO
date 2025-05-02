@@ -2,7 +2,11 @@ package service
 
 import (
 	"errors"
+	"math"
 	"time"
+
+	"github.com/gothanks/myapp/api/tinkoffApi"
+	"github.com/russianinvestments/invest-api-go-sdk/investgo"
 )
 
 const (
@@ -39,9 +43,11 @@ type SharePosition struct {
 	Figi                  string
 	InstrumentType        string
 	InstrumentUid         string
+	Ticker                string
+	ClassCode             string
+	Nominal               float64
 	BuyPrice              float64
-	SellPrice             float64
-	CurrentPrice          float64
+	SellPrice             float64 // Для открытых позиций.Текущая цена с биржи
 	BuyPayment            float64
 	SellPayment           float64
 	Currency              string
@@ -54,10 +60,29 @@ type SharePosition struct {
 	PaidTax               float64 // Фактически уплаченный налог(Часть налога будет уплачена в конце года, либо при выводе средств)
 	TotalTax              float64 // Налог рассчитанный
 	PositionProfit        float64 // С учетом рассчитанных налогов(TotalTax)
-	ProfitInPercentage    float64 // В десятичной дроби
+	ProfitInPercentage    float64 // В процентах строковая переменная
 }
 
-func ProcessOperations(operations []Operation) (*ReportPositions, error) {
+func (s *SharePosition) GetSpecificationsFromTinkoff(client *investgo.Client) error {
+	resSpecFromTinkoff, err := tinkoffApi.GetBondsActionsFromTinkoff(client, s.InstrumentUid)
+	if err != nil {
+		return errors.New("service:GetSpecificationsFromMoex" + err.Error())
+	}
+	s.Ticker = resSpecFromTinkoff.Ticker
+	s.ClassCode = resSpecFromTinkoff.ClassCode
+	s.Nominal = resSpecFromTinkoff.Nominal
+
+	resLastPriceFromTinkoff, err := tinkoffApi.GetLastPriceFromTinkoffInPersentageToNominal(client, s.InstrumentUid)
+	if err != nil {
+		return errors.New("service:GetSpecificationsFromMoex:" + err.Error())
+	}
+	// Округляем до двух занков после запятой
+	s.SellPrice = math.Round(resLastPriceFromTinkoff/100*s.Nominal*100) / 100
+	return nil
+
+}
+
+func ProcessOperations(client *investgo.Client, operations []Operation) (*ReportPositions, error) {
 	processPosition := &ReportPositions{}
 	for _, operation := range operations {
 		switch operation.Type {
@@ -85,8 +110,10 @@ func ProcessOperations(operations []Operation) (*ReportPositions, error) {
 			if operation.QuantityDone == 0 {
 				continue
 			} else {
-				processPurchaseOfSecurities(operation, processPosition)
-
+				err := processPurchaseOfSecurities(client, operation, processPosition)
+				if err != nil {
+					return nil, errors.New("service:ProcessOperations:" + err.Error())
+				}
 			}
 			// 17	Перевод ценных бумаг из другого депозитария.
 		case TransferOfSecuritiesFromAnotherDepository:
@@ -95,7 +122,10 @@ func ProcessOperations(operations []Operation) (*ReportPositions, error) {
 			if operation.QuantityDone == 0 {
 				continue
 			} else {
-				processTransferOfSecuritiesFromAnotherDepository(operation, processPosition)
+				err := processTransferOfSecuritiesFromAnotherDepository(client, operation, processPosition)
+				if err != nil {
+					return nil, errors.New("service:ProcessOperations:" + err.Error())
+				}
 			}
 			// 19	Удержание комиссии за операцию.
 		case WithhouldingACommissionForTheTransaction:

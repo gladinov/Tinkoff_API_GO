@@ -95,33 +95,29 @@ func AddOperations(nameDB string, accountId string, operations []service.Operati
 	}
 	count := 0
 	// Добавляем позиции в таблицу БД с динамическим названием портфель_аккаунт
-	for _, vals := range operations {
+	for _, val := range operations {
 		_, err := db.Exec(InsertOperationsSQL(accountId),
-			vals.Currency,
-			vals.Cursor,
-			vals.BrokerAccountId,
-			vals.Operation_Id,
-			vals.ParentOperationId,
-			vals.Name,
-			vals.Date,
-			vals.Type,
-			vals.Description,
-			vals.State,
-			vals.InstrumentUid,
-			vals.Figi,
-			vals.InstrumentType,
-			vals.InstrumentKind,
-			vals.PositionUid,
-			vals.Payment,
-			vals.Price,
-			vals.Commission,
-			vals.Yield,
-			vals.YieldRelative,
-			vals.AccruedInt,
-			vals.QuantityDone,
-			vals.CancelDateTime,
-			vals.CancelReason,
-			vals.AssetUid,
+			val.Currency,
+			val.BrokerAccountId,
+			val.Operation_Id,
+			val.ParentOperationId,
+			val.Name,
+			val.Date,
+			val.Type,
+			val.Description,
+			val.InstrumentUid,
+			val.Figi,
+			val.InstrumentType,
+			val.InstrumentKind,
+			val.PositionUid,
+			val.Payment,
+			val.Price,
+			val.Commission,
+			val.Yield,
+			val.YieldRelative,
+			val.AccruedInt,
+			val.QuantityDone,
+			val.AssetUid,
 		)
 
 		if err != nil {
@@ -221,4 +217,61 @@ func GetOperationsFromDBByAssetUid(nameDB, assetUid, accountId string) ([]servic
 	}
 
 	return operationRes, nil
+}
+
+func AddBondReportsInDB(nameDB, accountId string, bondReport []service.BondReport) error {
+	if len(bondReport) == 0 {
+		return errors.New("Срез пустой")
+	}
+	dbPath := fmt.Sprintf("../internal/database/%s", nameDB)
+	// Открываем БД
+	db, err := sql.Open("sqlite3", dbPath)
+	if err != nil {
+		return errors.New("database: AddBondReportsInDB" + err.Error())
+	}
+
+	defer db.Close()
+
+	// Создаем таблицу в БД с динамическим названием портфель_аккаунт
+	{
+		_, err := db.Exec(CreateBondReportQuery(accountId))
+		if err != nil {
+			return errors.New("database: AddBondReportsInDB" + err.Error())
+		}
+		fmt.Printf("✓ created table bondReport_%s\n", accountId)
+	}
+	count := 0
+	// Добавляем позиции в таблицу БД с динамическим названием портфель_аккаунт
+	for _, report := range bondReport {
+		query, err := InsertBondReportsTableQuery(accountId)
+		if err != nil {
+			return errors.New("database: AddBondReportsInDB" + err.Error())
+		}
+		_, err = db.Exec(query,
+			report.Name,
+			report.Ticker,
+			report.MaturityDate,
+			report.OfferDate,
+			report.Duration,
+			report.BuyDate,
+			report.BuyPrice,
+			report.YieldToMaturityOnPurchase,
+			report.YieldToOfferOnPurchase,
+			report.YieldToMaturity,
+			report.YieldToOffer,
+			report.CurrentPrice,
+			report.Nominal,
+			report.Profit,
+			report.AnnualizedReturn,
+		)
+
+		if err != nil {
+			return errors.New("database: AddBondReportsInDB" + err.Error())
+		} else {
+			count += 1
+		}
+
+	}
+	fmt.Printf("✓ added %v positions in SQL table bondReport_%s\n", count, accountId)
+	return nil
 }

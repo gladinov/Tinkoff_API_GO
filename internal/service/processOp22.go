@@ -2,6 +2,8 @@ package service
 
 import (
 	"errors"
+
+	"github.com/gothanks/myapp/other_func"
 )
 
 // 22	Продажа ЦБ.
@@ -79,7 +81,7 @@ func isCurrentQuantityGreaterThanSellQuantity(operation *Operation, currPosition
 	closePosition.PositionProfit = profitAfterTax
 
 	// Считаем процентный доход
-	profitInPercentage, err := getProfitInPercentage(closePosition)
+	profitInPercentage, err := getProfitInPercentage(profitAfterTax, closePosition.BuyPrice, closePosition.Quantity)
 	if err != nil {
 		return errors.New("service.getProfitInPercentage" + err.Error())
 	}
@@ -117,7 +119,7 @@ func isEqualCurrentQuantityAndSellQuantity(operation *Operation, currPosition *S
 	closePosition.PositionProfit = profitAfterTax
 
 	// Считаем процентный доход
-	profitInPercentage, err := getProfitInPercentage(closePosition)
+	profitInPercentage, err := getProfitInPercentage(profitAfterTax, closePosition.BuyPrice, closePosition.Quantity)
 	if err != nil {
 		return errors.New("service.getProfitInPercentage" + err.Error())
 	}
@@ -162,7 +164,7 @@ func isCurrentQuantityLessThanSellQuantity(operation *Operation, currPosition *S
 	closePosition.PositionProfit = profitAfterTax
 
 	// Считаем процентный доход
-	profitInPercentage, err := getProfitInPercentage(closePosition)
+	profitInPercentage, err := getProfitInPercentage(profitAfterTax, closePosition.BuyPrice, closePosition.Quantity)
 	if err != nil {
 		return errors.New("service.getProfitInPercentage" + err.Error())
 	}
@@ -207,9 +209,9 @@ func getSecurityIncome(profit, tax float64) float64 {
 	return profitAfterTax
 }
 
-func getProfitInPercentage(p SharePosition) (float64, error) {
-	if p.BuyPrice != 0 || p.Quantity != 0 {
-		profitInPercentage := p.PositionProfit / (p.BuyPrice * p.Quantity)
+func getProfitInPercentage(profit, buyPrice, quantity float64) (float64, error) {
+	if buyPrice != 0 || quantity != 0 {
+		profitInPercentage := other_func.RoundFloat((profit/(buyPrice*quantity))*100, 2)
 		return profitInPercentage, nil
 	} else {
 		return 0, errors.New("divide by zero")

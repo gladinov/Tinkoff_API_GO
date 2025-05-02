@@ -1,11 +1,5 @@
 package service
 
-import (
-	"errors"
-
-	"github.com/russianinvestments/invest-api-go-sdk/investgo"
-)
-
 type Bond struct {
 	Identifiers              Identifiers
 	Name                     string  // GetBondsActionsFromPortfolio
@@ -33,19 +27,6 @@ type Identifiers struct {
 	InstrumentUid string // T_Api_Getportfolio
 	PositionUid   string // T_Api_Getportfolio
 	AssetUid      string // GetBondsActionsFromPortfolio
-}
-
-// Получаем Тикер, Режим торгов и Короткое имя инструмента
-func (b *Bond) GetBondsActionsFromPortfolio(client *investgo.Client) error {
-	instrumentService := client.NewInstrumentsServiceClient()
-	bondUid, err := instrumentService.BondByUid(b.Identifiers.InstrumentUid)
-	if err != nil {
-		return errors.New("GetTickerFromUid: instrumentService.BondByUid" + err.Error())
-	}
-	b.Identifiers.Ticker = bondUid.BondResponse.Instrument.GetTicker()
-	b.Identifiers.ClassCode = bondUid.BondResponse.Instrument.GetClassCode()
-	b.Name = bondUid.BondResponse.Instrument.GetName()
-	return nil
 }
 
 // Получение данных с московской биржи

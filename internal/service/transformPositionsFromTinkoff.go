@@ -1,6 +1,7 @@
 package service
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/gothanks/myapp/api/tinkoffApi"
@@ -36,7 +37,7 @@ type PortfolioPosition struct {
 
 // Обрабатываем в нормальный формат портфеля
 func TransPositions(client *investgo.Client,
-	account *tinkoffApi.Account, assetUidInstrumentUidMap map[string]string) Portfolio {
+	account *tinkoffApi.Account, assetUidInstrumentUidMap map[string]string) (Portfolio, error) {
 	Portfolio := Portfolio{}
 	for _, v := range account.Portfolio {
 		if v.InstrumentType == "bond" {
@@ -60,10 +61,21 @@ func TransPositions(client *investgo.Client,
 			}
 			// Получаем AssetUid с помощью МАПЫ assetUidInstrumentUidMap
 			BondPosition.Identifiers.AssetUid = assetUidInstrumentUidMap[BondPosition.Identifiers.InstrumentUid]
+
 			// Получаем Тикер, Режим торгов и Короткое имя инструмента
-			BondPosition.GetBondsActionsFromPortfolio(client)
+			// BondPosition.GetBondsActionsFromPortfolio(client)
+			resFromTinkoff, err := tinkoffApi.GetBondsActionsFromTinkoff(client, BondPosition.Identifiers.InstrumentUid)
+			if err != nil {
+				return Portfolio, errors.New("TransPositions:GetBondsActionsFromTinkoff" + err.Error())
+			}
+			BondPosition.Identifiers.Ticker = resFromTinkoff.Ticker
+			BondPosition.Identifiers.ClassCode = resFromTinkoff.ClassCode
+			BondPosition.Name = resFromTinkoff.Name
+
 			//  Получение данных с московской биржи
 			// BondPosition.GetActionFromMoex()
+
+			// Добавляем позицию в срез позиций
 			Portfolio.BondPositions = append(Portfolio.BondPositions, BondPosition)
 		} else {
 			transPosionRet := PortfolioPosition{
@@ -90,5 +102,5 @@ func TransPositions(client *investgo.Client,
 	}
 	fmt.Printf("✓ Добавлено %v позиций в Account.PortfolioPositions по счету %s\n", len(Portfolio.PortfolioPositions), account.Id)
 	fmt.Printf("✓ Добавлено %v позиций в Account.PortfolioBondPositions по счету %s\n", len(Portfolio.BondPositions), account.Id)
-	return Portfolio
+	return Portfolio, nil
 }

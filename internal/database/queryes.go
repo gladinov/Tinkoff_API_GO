@@ -1,6 +1,7 @@
 package database
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"regexp"
@@ -83,7 +84,6 @@ func OperationSqlQuery(accountId string) string {
     CREATE TABLE IF NOT EXISTS operations_%s (
         id integer primary key,
         currency                TEXT,
-        cursor                  TEXT,
         broker_account_id       TEXT,
         operation_id            TEXT,
         parent_operation_id     TEXT,
@@ -91,7 +91,6 @@ func OperationSqlQuery(accountId string) string {
         date                    DATETIME, 
         type                    INTEGER,
         description             TEXT,
-        state                   INTEGER,
         instrument_uid          TEXT,
         figi                    TEXT,
         instrument_type         TEXT,
@@ -104,9 +103,7 @@ func OperationSqlQuery(accountId string) string {
         yield_relative          REAL,
         accrued_int             REAL,
         quantity_done           INTEGER,
-        cancel_date_time        DATETIME, 
-        cancel_reason           TEXT,
-        asset_uid               TEXT
+        asset_uid               TEXT  
     );`, accountId, accountId)
 
 	return CreateOperationTableQuery
@@ -120,7 +117,6 @@ func InsertOperationsSQL(accountId string) string {
 	InsertOperationQuery := fmt.Sprintf(`
     INSERT INTO operations_%s (
         currency,
-        cursor,
         broker_account_id,
         operation_id,
         parent_operation_id,
@@ -128,7 +124,6 @@ func InsertOperationsSQL(accountId string) string {
         date,
         type,
         description,
-        state,
         instrument_uid,
         figi,
         instrument_type,
@@ -141,40 +136,66 @@ func InsertOperationsSQL(accountId string) string {
         yield_relative,
         accrued_int,
         quantity_done,
-        cancel_date_time,
-        cancel_reason,
         asset_uid
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `, accountId)
 
 	return InsertOperationQuery
 }
 
-// func InsertActionsMoexSqlQuery() string {
-// 	PortfolioQuery := `
-//         DROP TABLE IF EXISTS amortization;
-//         CREATE TABLE IF NOT EXISTS amortization(
-//             id integer primary key,
-//             isin                 TEXT,
-//             name                      TEXT,
-//             issuevalue            TEXT,
-//             coupondate                  TEXT,
-//             recorddate                  REAL,
-//             startdate      REAL,
-//             initialfacevalue             REAL,
-//             facevalue                REAL,
-//             faceunit    REAL,
-//             currentPrice              REAL,
-//             averagePositionPriceFifo  REAL,
-//             quantityLots              REAL,
-//             blocked                   BOOLEAN,
-//             blockedLots               REAL,
-//             positionUid               TEXT,
-//             instrumentUid             TEXT,
-//             varMargin                 REAL,
-//             expectedYieldFifo         REAL,
-//             dailyYield                REAL
-//         );`
+func CreateBondReportQuery(accountId string) (string, error) {
+	if !isValidAccountId(accountId) {
+		return "", errors.New("database: CreateBondReportQuery: Недопустимое имя аккаунта")
+	}
 
-// 	return PortfolioQuery
-// }
+	createBondReportsTableQuery := fmt.Sprintf(`
+    DROP TABLE IF EXISTS bond_reports_%s;
+    CREATE TABLE IF NOT EXISTS bond_reports_%s (
+        id integer primary key,
+        name                            TEXT,
+        ticker                          TEXT,
+        maturity_date                   DATETIME,
+        offer_date                      DATETIME,
+        duration                        INTEGER,
+        buy_date                        DATETIME,
+        buy_price                       REAL,
+        yield_to_maturity_on_purchase   REAL,
+        yield_to_offer_on_purchase      REAL,
+        yield_to_maturity               REAL,
+        yield_to_offer                  REAL,
+        current_price                   REAL,
+        nominal                         REAL,
+        profit                          REAL,
+        annualized_return               REAL
+    );`, accountId, accountId)
+
+	return createBondReportsTableQuery, nil
+}
+
+func InsertBondReportsTableQuery(accountId string) (string, error) {
+	if !isValidAccountId(accountId) {
+		return "", errors.New("database: CreateBondReportQuery: Недопустимое имя аккаунта")
+	}
+
+	InsertBondReportQuery := fmt.Sprintf(`
+    INSERT INTO bond_reports_%s (
+        name,
+        ticker,
+        maturity_date,
+        offer_date,
+        duration,
+        buy_date,
+        buy_price,
+        yield_to_maturity_on_purchase,
+        yield_to_offer_on_purchase,
+        yield_to_maturity,
+        yield_to_offer,
+        current_price,
+        nominal,
+        profit,
+        annualized_return
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+`, accountId)
+
+	return InsertBondReportQuery, nil
+}

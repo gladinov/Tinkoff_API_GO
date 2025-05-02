@@ -3,13 +3,11 @@ package service
 import (
 	"time"
 
-	"github.com/gothanks/myapp/other_func"
 	pb "github.com/russianinvestments/invest-api-go-sdk/proto"
 )
 
 type Operation struct {
 	Currency          string
-	Cursor            string
 	BrokerAccountId   string
 	Operation_Id      string
 	ParentOperationId string
@@ -17,7 +15,6 @@ type Operation struct {
 	Date              time.Time // Время в UTC
 	Type              int64
 	Description       string
-	State             int64
 	InstrumentUid     string
 	Figi              string
 	InstrumentType    string
@@ -30,11 +27,7 @@ type Operation struct {
 	YieldRelative     float64
 	AccruedInt        float64
 	QuantityDone      float64
-	CancelDateTime    time.Time
-	CancelReason      string
-	TradesInfo        *pb.OperationItemTrades
 	AssetUid          string
-	ChildOperations   []*pb.ChildOperationItem
 }
 
 // Приводим операции к удобной структуре
@@ -43,7 +36,6 @@ func TransOperations(operations []*pb.OperationItem) []Operation {
 	for _, v := range operations {
 		transformOperation := Operation{
 			Currency:          v.GetPrice().Currency,
-			Cursor:            v.GetCursor(),
 			BrokerAccountId:   v.GetBrokerAccountId(),
 			Operation_Id:      v.GetId(),
 			ParentOperationId: v.GetParentOperationId(),
@@ -51,26 +43,21 @@ func TransOperations(operations []*pb.OperationItem) []Operation {
 			Date:              v.Date.AsTime(),
 			Type:              int64(v.GetType()),
 			Description:       v.GetDescription(),
-			State:             int64(v.GetState()),
 			InstrumentUid:     v.GetInstrumentUid(),
 			Figi:              v.GetFigi(),
 			InstrumentType:    v.GetInstrumentType(),
 			InstrumentKind:    string(v.GetInstrumentKind()),
 			PositionUid:       v.GetPositionUid(),
-			Payment:           other_func.MoneyValue(v.GetPayment()),
-			Price:             other_func.MoneyValue(v.GetPrice()),
-			Commission:        other_func.MoneyValue(v.GetCommission()),
-			Yield:             other_func.MoneyValue(v.GetYield()),
-			YieldRelative:     other_func.CastMoney(v.GetYieldRelative()),
-			AccruedInt:        other_func.MoneyValue(v.GetAccruedInt()),
+			Payment:           v.GetPayment().ToFloat(),
+			Price:             v.GetPrice().ToFloat(),
+			Commission:        v.GetCommission().ToFloat(),
+			Yield:             v.GetYield().ToFloat(),
+			YieldRelative:     v.GetYieldRelative().ToFloat(),
+			AccruedInt:        v.GetAccruedInt().ToFloat(),
 			QuantityDone:      float64(v.GetQuantityDone()),
-			CancelDateTime:    v.CancelDateTime.AsTime(),
-			CancelReason:      v.GetCancelReason(),
-			TradesInfo:        v.GetTradesInfo(),
-			AssetUid:          v.GetAssetUid(),
-			ChildOperations:   v.GetChildOperations(),
-		}
 
+			AssetUid: v.GetAssetUid(),
+		}
 		transformOperations = append(transformOperations, transformOperation)
 	}
 	return transformOperations
