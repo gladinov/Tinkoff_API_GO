@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"errors"
-	"fmt"
 	"log"
 	"os/signal"
 	"syscall"
@@ -75,20 +74,19 @@ func main() {
 	}
 
 	for _, account := range accsList {
-		bondReport, err := getBondReports(account, client, assetUidInstrumentUidMap, nameDB)
+		bondReport, err := getBondReport(account, client, assetUidInstrumentUidMap, nameDB)
 		if err != nil {
 			logger.Errorf("main error %v", err.Error())
 		}
-		fmt.Println(account.Id)
-		fmt.Println()
-		fmt.Println(bondReport.BondsInRUB)
-		fmt.Println(bondReport.BondsInCNY)
-		fmt.Println()
+
 		err = database.AddBondReportsInDB(nameDB, account.Id, bondReport.BondsInRUB)
+		if err != nil {
+			logger.Errorf("main error %v", err.Error())
+		}
 	}
 }
 
-func getBondReports(account tinkoffApi.Account, client *investgo.Client, assetUidInstrumentUidMap map[string]string, nameDB string) (service.Report, error) {
+func getBondReport(account tinkoffApi.Account, client *investgo.Client, assetUidInstrumentUidMap map[string]string, nameDB string) (service.Report, error) {
 	var bondReport service.Report
 	opereationsService := client.NewOperationsServiceClient()
 	// Получаем данные по портфелям по кажому счету
